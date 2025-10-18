@@ -1,0 +1,364 @@
+
+--------------------------------------------------------------------------------
+-- PAWNSHOP GAME - FULL TEST DATA POPULATOR (Oracle 19c) - v3
+-- This script fills all gameplay tables with realistic test data following README.
+-- Safe for reruns: truncates child tables first, keeps PLAYER rows, and repopulates.
+-- Tables populated:
+--   PLAYER (ensure 200 total)
+--   EXISTING_ITEM + DEAL_RECORD (1:1, 1500 rows)
+--   PLAYER_CUSTOMER_HIDDEN_DISCOVERED (from deal history)
+--   PLAYER_ITEM_DISPLAY (ongoing items only, per unlocked showcases)
+--   LOAN (200 rows) + REPAY_LOG (1~3 per loan, capped by principal)
+--   EXISTING_NEWS (0~3 per player, start at multiples of 7)
+--   WORLD_RECORD (top-profit deals per player, up to 50)
+-- Assumptions:
+--   * CUSTOMER (1..100), ITEM_CATALOG (1..100), NEWS_CATALOG (1..100) already exist
+--   * DDL matches user's latest schema
+--------------------------------------------------------------------------------
+
+PROMPT == Step 0. Seed PRNG ==
+BEGIN
+  DBMS_RANDOM.SEED(TO_NUMBER(TO_CHAR(SYSTIMESTAMP,'FF')));
+END;
+/
+--------------------------------------------------------------------------------
+
+PROMPT == Step 1. Truncate child tables (FK-safe order) ==
+TRUNCATE TABLE REPAY_LOG;
+TRUNCATE TABLE WORLD_RECORD;
+TRUNCATE TABLE PLAYER_ITEM_DISPLAY;
+TRUNCATE TABLE PLAYER_CUSTOMER_HIDDEN_DISCOVERED;
+TRUNCATE TABLE EXISTING_NEWS;
+TRUNCATE TABLE LOAN;
+TRUNCATE TABLE DEAL_RECORD;
+TRUNCATE TABLE EXISTING_ITEM;
+-- NOTE: PLAYER is NOT truncated to avoid identity restart issues.
+--------------------------------------------------------------------------------
+
+PROMPT == Step 2. Utility functions (idempotent) ==
+CREATE OR REPLACE FUNCTION rnd_int(p_min NUMBER, p_max NUMBER)
+RETURN NUMBER IS
+BEGIN
+  RETURN TRUNC(DBMS_RANDOM.VALUE(p_min, p_max + 1));
+END;
+/
+CREATE OR REPLACE FUNCTION pick_hidden_grade(p_wc NUMBER)
+RETURN NUMBER IS
+  p NUMBER := DBMS_RANDOM.VALUE(0,100);
+  uniq_portion NUMBER := (65*(1-p_wc))/3;
+  norm NUMBER := 35 + uniq_portion;
+  rare NUMBER := 30 + uniq_portion;
+  uniq NUMBER := 20 + uniq_portion;
+BEGIN
+  IF p < norm THEN RETURN 0; END IF;                 -- normal
+  IF p < norm + rare THEN RETURN 1; END IF;          -- rare
+  IF p < norm + rare + uniq THEN RETURN 2; END IF;   -- unique
+  RETURN 3;                                          -- legendary
+END;
+/
+CREATE OR REPLACE FUNCTION compute_flaws(p_clumsy NUMBER)
+RETURN NUMBER IS
+  vibe NUMBER := DBMS_RANDOM.VALUE(0,1);
+  f NUMBER := FLOOR(10*p_clumsy) + FLOOR(4*vibe);
+BEGIN
+  IF f > 14 THEN f := 14; END IF;
+  IF f < 0  THEN f := 0;  END IF;
+  RETURN f;
+END;
+/
+CREATE OR REPLACE FUNCTION is_genuine(p_fraud NUMBER)
+RETURN CHAR IS
+  fake_prob NUMBER := 10 + 90*p_fraud;  -- percent
+  roll NUMBER := DBMS_RANDOM.VALUE(0,100);
+BEGIN
+  RETURN CASE WHEN roll < fake_prob THEN 'N' ELSE 'Y' END;
+END;
+/
+--------------------------------------------------------------------------------
+
+PROMPT == Step 3. Ensure 200 PLAYER rows ==
+DECLARE
+  v_cnt NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_cnt FROM PLAYER;
+  FOR i IN (v_cnt+1)..200 LOOP
+    INSERT INTO PLAYER (PLR_ID, HASHED_PW, DAY_COUNT, MONEY, PERSONAL_DEBT,
+                        UNLOCKED_SHOWCASE_COUNT, NICKNAME, SHOP_NAME)
+    VALUES (
+      'user' || i,
+      STANDARD_HASH('pw'||i, 'SHA256'),
+      rnd_int(1, 200),
+      rnd_int(10000, 500000),
+      500000,
+      rnd_int(2, 8),
+      '닉네임' || i,
+      '전당포' || i
+    );
+  END LOOP;
+END;
+/
+--------------------------------------------------------------------------------
+
+PROMPT == Step 4. EXISTING_ITEM + DEAL_RECORD (1:1, rules applied) ==
+DECLARE
+  c_players   NUMBER;
+  v_player    NUMBER;
+  v_seller    NUMBER;
+  v_buyer     NUMBER;
+  v_item_id   NUMBER;
+  v_icat      NUMBER;
+  v_base      NUMBER;
+  v_fraud     NUMBER;
+  v_wc        NUMBER;
+  v_clumsy    NUMBER;
+  v_grade     NUMBER;
+  v_flaws     NUMBER;
+  v_auth      CHAR(1);
+  v_asking    NUMBER;
+  v_purchase  NUMBER;
+  v_appraised NUMBER;
+  v_selling   NUMBER;
+  v_isactive  CHAR(1);
+  v_sold_day  NUMBER;
+  v_counterfeit_prob NUMBER;
+  v_grade_factor     NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO c_players FROM PLAYER;
+
+  FOR i IN 1..1500 LOOP
+    v_player := rnd_int(1, c_players);
+    v_seller := rnd_int(1, 100);
+
+    -- 10% finished, 90% ongoing
+    v_isactive := CASE WHEN DBMS_RANDOM.VALUE(0,1) > 0.9 THEN 'N' ELSE 'Y' END;
+
+    -- choose catalog and load base price
+    v_icat := rnd_int(1, 100);
+    SELECT BASE_PRICE INTO v_base FROM ITEM_CATALOG WHERE ICT_KEY = v_icat;
+
+    -- load seller's traits
+    SELECT FRAUD, WELL_COLLECT, CLUMSY
+      INTO v_fraud, v_wc, v_clumsy
+      FROM CUSTOMER WHERE CUS_KEY = v_seller;
+
+    v_grade := pick_hidden_grade(v_wc);
+    v_flaws := compute_flaws(v_clumsy);
+    v_auth  := is_genuine(v_fraud);
+
+    v_counterfeit_prob := 10 + 90 * v_fraud;
+    v_grade_factor := (1 + 0.3 * v_grade) / 3;
+
+    v_asking := v_base
+              * (1 - 0.02 * v_flaws)
+              * (1 - 0.3 * (v_counterfeit_prob/100))
+              * v_grade_factor
+              * (1 + 0.25 * v_fraud)
+              * (1 + 0.2 * (v_wc - 0.5));
+    IF v_asking < 0 THEN v_asking := 0; END IF;
+
+    v_purchase  := v_asking;
+    v_appraised := v_asking;
+
+    IF v_auth = 'N' THEN
+      v_purchase  := v_purchase  * 0.5;  -- -50%
+      v_appraised := v_appraised * 0.8;  -- -20%
+    END IF;
+
+    CASE v_grade
+      WHEN 3 THEN v_appraised := GREATEST(v_appraised, v_asking * 1.7);
+      WHEN 2 THEN v_appraised := GREATEST(v_appraised, v_asking * 1.5);
+      WHEN 1 THEN v_appraised := GREATEST(v_appraised, v_asking * 1.2);
+      ELSE NULL; -- grade=0
+    END CASE;
+
+    IF v_isactive = 'N' THEN
+      LOOP
+        v_buyer := rnd_int(1, 100);
+        EXIT WHEN v_buyer <> v_seller;
+      END LOOP;
+      v_sold_day := rnd_int(1, 200);
+      v_selling  := ROUND(v_appraised * 0.8);  -- direct sale: 20% discount
+    ELSE
+      v_buyer := NULL;
+      v_sold_day := NULL;
+      v_selling := 0;
+    END IF;
+
+    INSERT INTO EXISTING_ITEM (ICAT_KEY, GRADE, FLAW_EA, AUTHENTICITY, ITEM_STATE, ISACTIVE)
+    VALUES (
+      v_icat,
+      v_grade,
+      v_flaws,
+      v_auth,
+      CASE WHEN v_isactive = 'N' THEN 4 ELSE 1 END,  -- 4:sold, 1:on display
+      'Y'
+    )
+    RETURNING ITM_KEY INTO v_item_id;
+
+    INSERT INTO DEAL_RECORD (
+      PLAYER_KEY, SELLER_KEY, BUYER_KEY, ITEM_KEY,
+      ASKING_PRICE, PURCHASE_PRICE, APPRAISED_PRICE, SELLING_PRICE,
+      ISACTIVE, SOLD_DATE
+    ) VALUES (
+      v_player, v_seller, v_buyer, v_item_id,
+      ROUND(v_asking),
+      ROUND(v_purchase),
+      ROUND(v_appraised),
+      ROUND(v_selling),
+      v_isactive,
+      v_sold_day
+    );
+  END LOOP;
+END;
+/
+--------------------------------------------------------------------------------
+
+PROMPT == Step 5. PLAYER_CUSTOMER_HIDDEN_DISCOVERED (meetings -> view bits) ==
+CREATE OR REPLACE FUNCTION build_view_bits(p_meet_count NUMBER)
+RETURN VARCHAR2 IS
+  bit1 CHAR(1);
+  bit2 CHAR(1);
+  bit3 CHAR(1);
+BEGIN
+  -- meet_count에 따라 약간의 가중치를 주되, 확률적으로 다양하게
+  bit1 := CASE WHEN DBMS_RANDOM.VALUE(0,1) < (0.3 + 0.05*p_meet_count) THEN '1' ELSE '0' END;
+  bit2 := CASE WHEN DBMS_RANDOM.VALUE(0,1) < (0.5 + 0.05*p_meet_count) THEN '1' ELSE '0' END;
+  bit3 := CASE WHEN DBMS_RANDOM.VALUE(0,1) < (0.7 + 0.05*p_meet_count) THEN '1' ELSE '0' END;
+
+  RETURN bit1 || bit2 || bit3;
+END;
+/
+MERGE INTO PLAYER_CUSTOMER_HIDDEN_DISCOVERED t
+USING (
+  SELECT dr.PLAYER_KEY, dr.SELLER_KEY AS CUSTOMER_KEY, COUNT(*) AS MEET_COUNT
+  FROM   DEAL_RECORD dr
+  GROUP BY dr.PLAYER_KEY, dr.SELLER_KEY
+) s
+ON (t.PLAYER_KEY = s.PLAYER_KEY AND t.CUSTOMER_KEY = s.CUSTOMER_KEY)
+WHEN NOT MATCHED THEN
+  INSERT (PLAYER_KEY, CUSTOMER_KEY, VIEWORNOT)
+  VALUES (s.PLAYER_KEY, s.CUSTOMER_KEY, build_view_bits(s.MEET_COUNT))
+WHEN MATCHED THEN
+  UPDATE SET t.VIEWORNOT = build_view_bits(s.MEET_COUNT)
+;
+--------------------------------------------------------------------------------
+
+PROMPT == Step 6. PLAYER_ITEM_DISPLAY (ongoing items only) ==
+DECLARE
+  CURSOR c_plr IS
+    SELECT PLR_KEY, UNLOCKED_SHOWCASE_COUNT FROM PLAYER;
+  v_taken NUMBER;
+BEGIN
+  FOR r IN c_plr LOOP
+    SELECT COUNT(*) INTO v_taken
+      FROM PLAYER_ITEM_DISPLAY
+     WHERE PLAYER_KEY = r.PLR_KEY;
+
+    FOR rec IN (
+      SELECT d.ITEM_KEY,
+             ROW_NUMBER() OVER (ORDER BY d.DRC_KEY) - 1 AS pos
+        FROM DEAL_RECORD d
+        JOIN EXISTING_ITEM ei ON ei.ITM_KEY = d.ITEM_KEY
+       WHERE d.PLAYER_KEY = r.PLR_KEY
+         AND d.ISACTIVE = 'Y'
+         AND ei.ITEM_STATE = 1
+         AND NOT EXISTS (
+               SELECT 1 FROM PLAYER_ITEM_DISPLAY pid
+                WHERE pid.PLAYER_KEY = r.PLR_KEY
+                  AND pid.ITEM_KEY   = d.ITEM_KEY
+             )
+       FETCH FIRST GREATEST(0, r.UNLOCKED_SHOWCASE_COUNT - v_taken) ROWS ONLY
+    ) LOOP
+      BEGIN
+        INSERT INTO PLAYER_ITEM_DISPLAY (PLAYER_KEY, ITEM_KEY, DISPLAY_POS)
+        VALUES (r.PLR_KEY, rec.ITEM_KEY, MOD(rec.pos, 8));
+      EXCEPTION WHEN DUP_VAL_ON_INDEX THEN NULL;
+      END;
+    END LOOP;
+  END LOOP;
+END;
+/
+--------------------------------------------------------------------------------
+
+PROMPT == Step 7. LOAN (200 rows) + REPAY_LOG (1~3 per loan) ==
+INSERT INTO LOAN (PLAYER_KEY, LEFT_DEBT_AMOUNT)
+SELECT p.PLR_KEY, rnd_int(300, 2000)
+  FROM PLAYER p
+ WHERE ROWNUM <= 200;
+/
+DECLARE
+  CURSOR c_loan IS
+    SELECT LOAN_KEY, LEFT_DEBT_AMOUNT FROM LOAN;
+  v_n   NUMBER;
+  v_amt NUMBER;
+  v_sum NUMBER;
+BEGIN
+  FOR r IN c_loan LOOP
+    v_n := rnd_int(1,3);
+    v_sum := 0;
+    FOR i IN 1..v_n LOOP
+      v_amt := rnd_int(50, LEAST(500, r.LEFT_DEBT_AMOUNT - v_sum));
+      EXIT WHEN v_amt <= 0;
+      INSERT INTO REPAY_LOG (LOAN_KEY, AMOUNT) VALUES (r.LOAN_KEY, v_amt);
+      v_sum := v_sum + v_amt;
+      EXIT WHEN v_sum >= r.LEFT_DEBT_AMOUNT;
+    END LOOP;
+  END LOOP;
+END;
+/
+--------------------------------------------------------------------------------
+
+PROMPT == Step 8. EXISTING_NEWS (weekly global events; replace all every 7 days) ==
+DECLARE
+  v_news_cnt NUMBER;
+  v_n NUMBER;
+  v_k NUMBER;
+  v_amt NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_news_cnt FROM NEWS_CATALOG;
+
+  FOR r IN (SELECT PLR_KEY, DAY_COUNT FROM PLAYER) LOOP
+    -- 1~6일차는 뉴스 없음, 7의 배수일(7,14,21,...)부터는 항상 뉴스 유지
+    IF r.DAY_COUNT >= 7 THEN
+      -- 기존 뉴스 삭제
+      DELETE FROM EXISTING_NEWS WHERE PLAYER_KEY = r.PLR_KEY;
+
+      -- 플레이어별 1~3개 뉴스 생성
+      v_n := rnd_int(1,3);
+      FOR i IN 1..v_n LOOP
+        v_k := rnd_int(1, v_news_cnt);
+        v_amt := rnd_int(1, 50); -- 영향 강도 (양수)
+        INSERT INTO EXISTING_NEWS (PLAYER_KEY, NCAT_KEY, AMOUNT)
+        VALUES (r.PLR_KEY, v_k, v_amt);
+      END LOOP;
+    END IF;
+  END LOOP;
+END;
+/
+
+
+
+--------------------------------------------------------------------------------
+
+PROMPT == Step 9. WORLD_RECORD (all finished deals recorded; no per-player limit) ==
+INSERT INTO WORLD_RECORD (PLAYER_KEY, CLEAR_DAY_COUNT, CLEAR_DATE, LGST_PROFIT_DEAL_KEY)
+SELECT dr.PLAYER_KEY,
+       rnd_int(30,300),
+       SYSDATE - DBMS_RANDOM.VALUE(0,300),
+       dr.DRC_KEY
+  FROM DEAL_RECORD dr
+ WHERE dr.ISACTIVE = 'N';
+/
+
+--------------------------------------------------------------------------------
+
+PROMPT == Done. Verify counts ==
+SELECT 'PLAYER' AS TBL, COUNT(*) AS CNT FROM PLAYER
+UNION ALL SELECT 'EXISTING_ITEM', COUNT(*) FROM EXISTING_ITEM
+UNION ALL SELECT 'DEAL_RECORD', COUNT(*) FROM DEAL_RECORD
+UNION ALL SELECT 'PCHD (HIDDEN)', COUNT(*) FROM PLAYER_CUSTOMER_HIDDEN_DISCOVERED
+UNION ALL SELECT 'DISPLAY', COUNT(*) FROM PLAYER_ITEM_DISPLAY
+UNION ALL SELECT 'LOAN', COUNT(*) FROM LOAN
+UNION ALL SELECT 'REPAY_LOG', COUNT(*) FROM REPAY_LOG
+UNION ALL SELECT 'EXISTING_NEWS', COUNT(*) FROM EXISTING_NEWS
+UNION ALL SELECT 'WORLD_RECORD', COUNT(*) FROM WORLD_RECORD;
