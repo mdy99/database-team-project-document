@@ -275,16 +275,17 @@ README.txt
 					[ DB 테이블 목차 ]
  1. 유저(PLAYER)
  2. 고객(CUSTOMER)
- 3. 아이템 카탈로그(ITEM_CATALOG)
- 4. 아이템(EXISTING_ITEM)
- 5. 거래(DEAL_RECORD)
- 6. 플레이어-고객 만남(PLAYER_CUSTOMER_MEETINGS) <관계>
- 7. 플레이어-아이템 전시(PLAYER_ITEM_DISPLAY) <관계>
- 8. 세계 기록(WORLD_RECORD)
- 9. 대출(LOAN)
-10. 상환기록(REPAY_LOG) WEAK_ENTITY
-11. 뉴스(EXISTING_NEWS)
-12. 뉴스 카탈로그(NEWS_CATALOG)
+ 3. 아이템 카테고리(ITEM_CATEGORY) : 20개 레코드(상세 설명은 아래 엔티티)
+ 4. 아이템 카탈로그(ITEM_CATALOG)
+ 5. 아이템(EXISTING_ITEM)
+ 6. 거래(DEAL_RECORD)
+ 7. 플레이어-고객 만남(PLAYER_CUSTOMER_MEETINGS) <관계>
+ 8. 플레이어-아이템 전시(PLAYER_ITEM_DISPLAY) <관계>
+ 9. 세계 기록(WORLD_RECORD)
+10. 대출(LOAN)
+11. 상환기록(REPAY_LOG) : WEAK_ENTITY
+12. 뉴스(EXISTING_NEWS)
+13. 뉴스 카탈로그(NEWS_CATALOG)
 
 
 					[ DB 엔티티 ]
@@ -302,20 +303,27 @@ README.txt
  2. 고객(CUSTOMER)
 	- 고객 키 			PK	NUMBER(9)			: 내부 조인용 PK. SEQUENCE로 구현
 	- 고객 이름				NUMBER(3 CHAR)	: 한글 기준 3글자 저장 가능
-	- 카테고리 키 			NUMBER(9)			: 선호하는 카테고리 키
+	- 카테고리 키 		FK	NUMBER(9)			: 선호하는 카테고리 키
 	- 이미지 ID	 			VARCHAR2(10)		: 고객 이미지. 동일한 이미지를 여러 고객이 공유할 수 있음. CIM00001~CIM99999
 	- 사기 가능성 			NUMBER(5,4)		: 사기를 잘 칠 것 같은 정도. 0.0000 ~ 1.0000
 	- 수집력 				NUMBER(5,4)		: 수집을 잘 할 것 같은 정도. 0.0000 ~ 1.0000
 	- 부주의함 				NUMBER(5,4)		: 흠 많이 낼 것 같은 정도. 0.0000 ~ 1.0000
 
- 3. 아이템 카탈로그(ITEM_CATALOG)
+ 3. 아이템 카테고리(ITEM_CATEGORY)
+	- 카테고리 키		PK	NUMBER(9)			: 내부 조인용 PK. SEQUENCE로 구현
+	- 카테고리 이름 			VARCHAR2(10 CHAR)	: 한글 기준 10글자 저장 가능
+>> 고객의 선호 카테고리와 아이템의 카테고리가 일치해야 구매를 하는 시스템
+>> 카테고리가 너무 많아지면, 고객이 아이템을 살 확률이 너무 낮아져, 게임이 진행이 안 됨.
+>> 그래서 고정적인 20개 레코드만을 유지함.
+
+ 4. 아이템 카탈로그(ITEM_CATALOG)
 	- 아이템 카탈로그 키	PK	NUMBER(9)			: 내부 조인용 PK. SEQUENCE로 구현
 	- 아이템 이름 PK 			VARCHAR2(20 CHAR)	: 한글 기준 20글자 저장 가능
 	- 이미지 ID	 			VARCHAR2(10)		: 아이템 이미지. 동일한 이미지를 여러 아이템이 공유할 수 있음. ITM00001~ITM99999
-	- 카테고리 키 			NUMBER(9)			: 아이템의 카테고리 키
+	- 카테고리 키 		FK	NUMBER(9)			: 아이템의 카테고리 키
 	- 기준가				NUMBER(9)			: 아이템의 기준 가격
 
- 4. 아이템(EXISTING_ITEM)
+ 5. 아이템(EXISTING_ITEM)
 	- 아이템 키			PK	NUMBER(9)			: 내부 조인용 PK. SEQUENCE로 구현
 	- 카탈로그 키 FK			NUMBER(9)			: 아이템의 기본 토대
 	- 등급				NUMBER(1)			: 숨겨진 등급. 일반(0), 레어(1),유니크(2),레전더리(3)
@@ -324,7 +332,7 @@ README.txt
 	- 상태				NUMBER(1)			: 아이템 진행 상황. 생성됨(0), 전시 중(1), 복원 중(2), 경매 중(3), 판매 됨(4)
 	- 활성화 여부			CHAR(1)			: 활성화 여부, BOOL이 없으므로 Y OR N CHAR로 저장. 기본 'Y'. 게임오버/클리어 시 비활성화함
 
- 5. 거래(DEAL_RECORD)
+ 6. 거래(DEAL_RECORD)
 	- 거래 키			PK	NUMBER(9)			: 내부 조인용 PK. SEQUENCE로 구현
 	- 플레이어 키		FK	NUMBER(9)			: 해당 거래에 참여한 플레이어 키
 	- 판매 고객 키 		FK	NUMBER(9)			: 해당 거래에 참여한 판매 고객 키
@@ -337,14 +345,14 @@ README.txt
 	- 활성화 여부			CHAR(1)			: 활성화 여부, BOOL이 없으므로 Y OR N CHAR로 저장. 기본 'Y'. 게임오버/클리어 시 비활성화함
 	- 판매 날짜				NUMBER(5)			: 판매한 게임 내 일수. 판매한 날짜에 채움. NULL 가능
 
- 6. 플레이어-고객 만남(PLAYER_CUSTOMER_MEETINGS) <관계>
+ 7. 플레이어-고객 만남(PLAYER_CUSTOMER_MEETINGS) <관계>
 	- 만남 키			PK	NUMBER(9)			: 내부 조인용 PK. SEQUENCE로 구현
 	- 플레이어 키 		FK	NUMBER(9)			: 해당 플레이어 키 
 	- 고객 키 			FK	NUMBER(9)			: 해당 고객 키
 	- 열람여부			 	NUMBER(3)			: 고객 뒷조사로 열은 고객 힌트 열람 여부다. 힌트 3개에 대하여 이진수 "000~111"로 저장해 0~7까지 확인 가능
 	- 플레이어-고객		UQ	*CONSTRAINT		: 플레이어, 고객 복합키 중복 제거. 플레이어는 한 고객에 대해 만남 횟수 한번만 저장 후 업데이트하여 사용
 
- 7. 플레이어-아이템 전시(PLAYER_ITEM_DISPLAY) <관계>
+ 8. 플레이어-아이템 전시(PLAYER_ITEM_DISPLAY) <관계>
 	- 전시 키			PK	NUMBER(9)			: 내부 조인용 PK. SEQUENCE로 구현
 	- 플레이어 키 		FK	NUMBER(9)			: 해당 플레이어 키 
 	- 고객 키 			FK	NUMBER(9)			: 해당 고객 키
@@ -352,34 +360,34 @@ README.txt
 	- 플레이어-전시 위치	UQ	*CONSTRAINT		: 플레이어, 전시 위치 복합키 중복 제거. 한 위치에 두 아이템 막기 위함
 	- 플레이어-아이템		UQ	*CONSTRAINT		: 플레이어, 아이템 복합키 중복 제거. 아이템 중복 막기 위함
 
- 8. 세계 기록(WORLD_RECORD)
+ 9. 세계 기록(WORLD_RECORD)
 	- 세계 기록 키		PK	NUMBER(9)			: 내부 조인용 PK. SEQUENCE로 구현
 	- 플레이어 키 		FK	NUMBER(9)			: 해당 플레이어 키 
 	- 클리어 일수			NUMBER(9) 		: 클리어했을 당시 게임 일수
 	- 클리어 날짜			DATE 			: 클리어 당시 현실 날짜. DEFAULT SYSDATE
 	- 가장 큰 이득 거래 키	FK	NUMBER(9) 		: 가장 이득 본 거래의 키
 
- 9. 대출(LOAN)
+10. 대출(LOAN)
 	- 대출 키			PK	NUMBER(9)			: 내부 조인용 PK. SEQUENCE로 구현
 	- 플레이어 키 		FK	NUMBER(9)			: 대출한 해당 플레이어 키 
 	- 남은 빌린 금액			NUMBER(5)			: 대출금 중 현재 남은 금액 (EX. INSERT 2000 UPDATE 1800,UPDATE 1200,UPDATE 900, ...)
 
-10. 상환기록(REPAY_LOG) - WEAK ENTITY
+11. 상환기록(REPAY_LOG) - WEAK ENTITY
 	- 상환 기록 키		PK	NUMBER(9)			: 내부 조인용 PK. SEQUENCE로 구현
 	- 대출 키			FK	NUMBER(9)			: 대출 기록이 삭제되면, 해당 대출에 대한 상환기록도 모두 지워짐. ON DELETE CASCADE
 	- 상환 정도				NUMBER(9)			: 상환한 금액 (0G 이상)
 
-11. 뉴스(EXISTING_NEWS)
+12. 뉴스(EXISTING_NEWS)
 	- 뉴스 키			PK	NUMBER(9)			: 내부 조인용 PK. SEQUENCE로 구현
 	- 플레이어 키 		FK	NUMBER(9)			: 영향 받는 해당 플레이어 키 
 	- 뉴스 카탈로그 키	FK	NUMBER(9)			: 뉴스의 기본 토대
 	- 영향 받는 정도			NUMBER(3)			: -999(%) ~ +999(%) 까지 영향을 줌  
 
-12. 뉴스 카탈로그(NEWS_CATALOG)
+13. 뉴스 카탈로그(NEWS_CATALOG)
 	- 카탈로그 키		PK	NUMBER(9)			: 내부 조인용 PK. SEQUENCE로 구현
 	- 뉴스 이름				VARCHAR2(20 CHAR)	: 뉴스 이름. 한글 기준 20글자 담기 가능
 	- 영향 받는 가격			NUMBER(1)			: 영향 받는 최초 제시가(0), 구매가(1), 감정가(2), 최종 판매가(3)
-	- 영향 받는 카테고리		NUMBER(9)			: 영향 받는 카테고리 키
+	- 영향 받는 카테고리	FK	NUMBER(9)			: 영향 받는 카테고리 키
 
 
 					[ 테이블이 아닌 관계 ]
@@ -394,6 +402,11 @@ CUSTOMER 		-<BUYS>-				DEAL_RECORD 		: (0,n)-(1,1). 최종으로 물건을 구�
 EXISTING_ITEM 		-<REALIZES>-			ITEM_CATALOG		: (1,1)-(0,n). 아이템은 아이템 카탈로그를 무조건 참조함
 EXISTING_NEWS 		-<REALIZES>-			NEWS_CATALOG		: (1,1)-(0,n). 뉴스는 뉴스 카탈로그를 무조건 참조함
 PLAYER 			-<IS_AFFECTED_BY>-		EXISTING_NEWS		: (0,n)-(1,1). 현재 진행 중인 뉴스 이벤트에 영향 받고 있는 플레이어 키를 참조
+
+ITEM_CATALOG		-<BELONGS_TO>-		ITEM_CATEGORY		: (1,1)-(0,n). 아이템 카탈로그는 카테고리를 무조건 참조함
+CUSTOMER			-<LOVES_TO_BUY>-		ITEM_CATEGORY		: (1,1)-(0,n). 고객은 카테고리를 무조건 참조함
+ITEM_CATEGORY		-<IS_AFFECTED_BY>-		NEWS_CATALOG		: (0,n)-(1,1). 뉴스 카탈로그는 아이템 카테고리를 무조건 참조함
+
 
 PLAYER 			-<BORROWS>-			LOAN				: (0,n)-(1,1). 대출에 대출한 플레이어를 키로 참조
 LOAN				-<<IS_LOGGED_BY>>-		REPAY_LOG	(WEAK)	: (0,n)-(1,1). 해당 대출에 해당하는 상환 기록을 저장 WEAK 관계
