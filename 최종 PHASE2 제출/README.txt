@@ -3,6 +3,9 @@ README.txt
 						[ SQL 실행 순서 ]
 1. CREATE_TABLE_DDL.sql
 2. INSERT_RECORD_ALL.sql
+						[ 테이블 전체 삭제를 원한다면 ]
+1. DELETE_TABLE_ALL.sql
+
 
 						[ 간단 기획 설명 ]
 개인 빚을 갚기 위해 고향으로 내려와 전당포를 이어 운영하기로 하였다
@@ -304,13 +307,13 @@ README.txt
  4. 아이템 카탈로그(ITEM_CATALOG)
  5. 아이템(EXISTING_ITEM)
  6. 거래(DEAL_RECORD)
- 7. 플레이어-고객 만남(PLAYER_CUSTOMER_MEETINGS) <관계>
+ 7. 플레이어-고객 비밀 발견(PLAYER_CUSTOMER_HIDDEN_DISCOVERED) <관계>
  8. 플레이어-아이템 전시(PLAYER_ITEM_DISPLAY) <관계>
  9. 세계 기록(WORLD_RECORD)
 10. 대출(LOAN)
-11. 상환기록(REPAY_LOG) : WEAK_ENTITY
-12. 뉴스(EXISTING_NEWS)
-13. 뉴스 카탈로그(NEWS_CATALOG)
+11. 뉴스(EXISTING_NEWS)
+12. 뉴스 카탈로그(NEWS_CATALOG)
+13. 로그인 기록(LOGIN_LOG): <<WEAK_ENTITY>>
 
 
 					[ DB 엔티티 ]
@@ -370,8 +373,8 @@ README.txt
 	- 활성화 여부			CHAR(1)			: 활성화 여부, BOOL이 없으므로 Y OR N CHAR로 저장. 기본 'Y'. 게임오버/클리어 시 비활성화함
 	- 판매 날짜				NUMBER(5)			: 판매한 게임 내 일수. 판매한 날짜에 채움. NULL 가능
 
- 7. 플레이어-고객 만남(PLAYER_CUSTOMER_MEETINGS) <관계>
-	- 만남 키			PK	NUMBER(9)			: 내부 조인용 PK. SEQUENCE로 구현
+ 7. 플레이어-고객 비밀 발견(PLAYER_CUSTOMER_HIDDEN_DISCOVERED) <관계>
+	- 발견 키			PK	NUMBER(9)			: 내부 조인용 PK. SEQUENCE로 구현
 	- 플레이어 키 		FK	NUMBER(9)			: 해당 플레이어 키 
 	- 고객 키 			FK	NUMBER(9)			: 해당 고객 키
 	- 열람여부			 	NUMBER(3)			: 고객 뒷조사로 열은 고객 힌트 열람 여부다. 힌트 3개에 대하여 이진수 "000~111"로 저장해 0~7까지 확인 가능
@@ -397,22 +400,28 @@ README.txt
 	- 플레이어 키 		FK	NUMBER(9)			: 대출한 해당 플레이어 키 
 	- 남은 빌린 금액			NUMBER(5)			: 대출금 중 현재 남은 금액 (EX. INSERT 2000 UPDATE 1800,UPDATE 1200,UPDATE 900, ...)
 
-11. 상환기록(REPAY_LOG) - WEAK ENTITY
-	- 상환 기록 키		PK	NUMBER(9)			: 내부 조인용 PK. SEQUENCE로 구현
-	- 대출 키			FK	NUMBER(9)			: 대출 기록이 삭제되면, 해당 대출에 대한 상환기록도 모두 지워짐. ON DELETE CASCADE
-	- 상환 정도				NUMBER(9)			: 상환한 금액 (0G 이상)
-
-12. 뉴스(EXISTING_NEWS)
+11. 뉴스(EXISTING_NEWS): <<WEAK_ENTITY>>
 	- 뉴스 키			PK	NUMBER(9)			: 내부 조인용 PK. SEQUENCE로 구현
 	- 플레이어 키 		FK	NUMBER(9)			: 영향 받는 해당 플레이어 키 
 	- 뉴스 카탈로그 키	FK	NUMBER(9)			: 뉴스의 기본 토대
 	- 영향 받는 정도			NUMBER(3)			: -999(%) ~ +999(%) 까지 영향을 줌  
 
-13. 뉴스 카탈로그(NEWS_CATALOG)
+12. 뉴스 카탈로그(NEWS_CATALOG)
 	- 카탈로그 키		PK	NUMBER(9)			: 내부 조인용 PK. SEQUENCE로 구현
 	- 뉴스 이름				VARCHAR2(20 CHAR)	: 뉴스 이름. 한글 기준 20글자 담기 가능
 	- 영향 받는 가격			NUMBER(1)			: 영향 받는 최초 제시가(0), 구매가(1), 감정가(2), 최종 판매가(3)
 	- 영향 받는 카테고리	FK	NUMBER(9)			: 영향 받는 카테고리 키
+
+13. 로그인 기록(LOGIN_LOG): <<WEAK_ENTITY>>
+	- 플레이어 키 		FK	NUMBER(9)			: 로그인한 해당 플레이어 키. WEAK ENTITY이기 때문에 ON DELETE CASCADE 처리
+	- 로그 키				NUMBER(9)			: 내부 조인용 PK. SEQUENCE로 구현
+	- 로그인 날짜시간			DATE				: 로그인 시각. NOT NULL. DEFAULT SYSDATE
+	- 로그아웃 날짜시간		DATE				: 로그아웃 시각. NULLABLE (NULL이라면, 현재 로그인 중이라는 말)
+	- 세션 토큰				VARCHAR2(64)		: 로그인 세션 구분용 토큰. 랜덤 64B 문자열 생성. (일종의 클라 신분증)
+	- 마지막 행동 시간		DATE				: 마지막 행동 시간. 매요청마다 UPDATE SYSDATE. 30분 지나면, 세션 만료 시키기
+	- 세션 유효				CHAR(1)			: 현재 세션이 유효한지 CHECK ('Y'/'N')
+	- 플레이어키-로그키	PK	*CONSTRAINT		: 플레이어 키와 로그 키의 PK 복합키
+	- 플레이어-세션 유효	UQ	*CONSTRAINT		: 플레이어, 세션 유효 여부 중복 제거. 다중 로그인 방지. 한 플레이어는 한번만 로그인이 가능하다.
 
 
 					[ 테이블이 아닌 관계 ]
