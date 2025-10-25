@@ -317,7 +317,7 @@ README.txt
  1. 유저(PLAYER)
 	- 플레이어 키		PK	NUMBER(9)			: 내부 조인용 PK. SEQUENCE로 구현
 	- 플레이어 아이디			VARCHAR2(30)		: 유저가 입력하는 아이디
-	- 해시된 비밀번호			VARCHAR2(64)		: 유저가 설정한 비밀번호. SHA256 해시 고려
+	- 해시된 비밀번호			VARCHAR2(81)		: 유저가 설정한 비밀번호. SHA256 해시(HEX, 64자) + 구분자 + Salt(16자) 고려
 	- 생성 날짜 				DATE				: DEFAULT SYSDATE로 생성된 날짜를 저장함
 	- 주인 이름(닉네임) 		VARCHAR2(10 CHAR)	: 한글 기준 10글자 저장 가능
 	- 가게 이름 				VARCHAR2(10 CHAR)	: 한글 기준 10글자 저장 가능
