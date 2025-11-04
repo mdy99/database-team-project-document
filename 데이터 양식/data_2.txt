@@ -1,0 +1,113 @@
+1. 회원가입
+ POST /player/register
+ 보내는 항목 → { playerId, password }
+ 받는 항목 → { success: bool, message }
+
+
+2. 로그인
+ POST /player/login
+ 보내는 항목 → { playerId, password }
+ 받는 항목 → { success: bool, sessionToken, message }
+
+
+3. 세션(게임) 생성 또는 새 게임 시작
+ POST /session/start
+ 보내는 항목 → { sessionToken }
+ 받는 항목 → { success: bool, gameSession: GameSessionData }
+
+
+4. 가장 최근 게임 세션 불러오기
+ GET /session/latest
+ 보내는 항목 → { sessionToken }
+ 받는 항목 → { success: bool, data: NormalizedGameData }
+
+
+5. 전시장(디스플레이) 조회
+ GET /display
+ 보내는 항목 → { sessionToken }
+ 받는 항목 → { success: bool, data: DisplayResponse }
+
+
+6. 뉴스(당일 이벤트) 조회
+ GET /news/today
+ 보내는 항목 → { sessionToken }
+ 받는 항목 → { success: bool, data: List<NewsData> }
+
+
+7. 고객(손님) 정보 조회
+ GET /customer/all
+ 보내는 항목 → { sessionToken }
+ 받는 항목 → { success: bool, data: Dictionary<CustomerCatalogData> }
+
+
+8. 아이템 힌트/확률 조회
+ GET /hint/item
+ 보내는 항목 → { sessionToken, catalogKey }
+ 받는 항목 → { success: bool, suspiciousFlawAura, gradeHint }
+
+
+9. 거래 시작
+ POST /deal/start
+ 보내는 항목 → DealStartRequest
+ 받는 항목 → { success: bool, data: DealData }
+
+
+10. 거래(구매) 완료
+ POST /deal/complete
+ 보내는 항목 → DealCompleteRequest
+ 받는 항목 → { success: bool, data: DealData }
+
+
+11. 거래 취소
+ POST /deal/cancel
+ 보내는 항목 → { sessionToken, dealKey }
+ 받는 항목 → { success: bool, message }
+
+
+12. 아이템 상태 변경
+ POST /item/state
+ 보내는 항목 → ItemStateUpdateRequest
+ 받는 항목 → { success: bool, data: ExistingItemData }
+
+
+13. 전시장 업데이트
+ POST /display/update
+ 보내는 항목 → DisplayUpdateRequest
+ 받는 항목 → { success: bool, data: DisplayResponse }
+
+
+14. 흠 찾기 / 진위 판정 / 감정 처리 요청
+ POST /item/action
+ 보내는 항목 → ItemActionRequest
+ 받는 항목 → { success: bool, data: ExistingItemData }
+
+
+15. 대출(빌리기) / 상환
+ POST /loan/update
+ 보내는 항목 → LoanUpdateRequest
+ 받는 항목 → { success: bool, data: GameSessionData }
+
+
+16. 정산 및 다음 날 진행
+ POST /day/next
+ 보내는 항목 → { sessionToken }
+ 받는 항목 → { success: bool, data: DayNextResponse }
+
+
+17. 경매 출품 / 경매 결과 반영
+ POST /auction/update
+ 보내는 항목 → { sessionToken, itemKey, resultData }
+ 받는 항목 → { success: bool, data: DealData }
+
+
+18. 세계 기록 조회
+ GET /worldrecord/all
+ 보내는 항목 → { sessionToken }
+ 받는 항목 → { success: bool, data: List<WorldRecord> }
+
+
+19. 로그아웃 / 세션 만료
+ POST /player/logout
+ 보내는 항목 → { sessionToken }
+ 받는 항목 → { success: bool, message }
+
