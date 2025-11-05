@@ -89,7 +89,8 @@ CREATE TABLE EXISTING_ITEM(
                 1, -- 전시 중
                 2, -- 복원 중
                 3, -- 경매 중
-                4  -- 판매 됨
+                4, -- 판매 됨
+                5  -- 복원 완료
             )
         ),
     CONSTRAINT CK_EXISTING_ITEM_GRADE_EQ_OR_LOWER_THAN_REAL CHECK (FOUND_GRADE <= GRADE),

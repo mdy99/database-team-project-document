@@ -88,14 +88,14 @@ Response JSON (200 OK)
     "itemCatalogs": [
         {
             "itemCatalogKey": 45,
-            "itemName": "골동 도자기",
-            "imageUrl": "ITM00001",
+            "itemCatalogName": "골동 도자기",
+            "imgId": "ITM00001",
             "categoryName": "Antique"
         },
         {
             "itemCatalogKey": 46,
-            "itemName": "희귀 서적",
-            "imageUrl": "ITM00002",
+            "itemCatalogName": "희귀 서적",
+            "imgId": "ITM00002",
             "categoryName": "Book"
         }
     ],
@@ -104,13 +104,13 @@ Response JSON (200 OK)
             "customerKey": 89,
             "customerName": "루이스",
             "favoriteCategoryName": "Antique",
-            "imageId": "CUS00001"
+            "imgId": "CUS00001"
         },
         {
             "customerKey": 75,
             "customerName": "에밀리",
             "favoriteCategoryName": "Book",
-            "imageId": "CUS00002"
+            "imgId": "CUS00002"
         }
     ]
 }
