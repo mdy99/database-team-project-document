@@ -19,7 +19,8 @@ public enum ItemState
     OnDisplay = 1,       // 전시 중
     UnderRestoration = 2,// 복원 중
     OnAuction = 3,       // 경매 중
-    Sold = 4             // 판매 완료
+    Sold = 4,             // 판매 완료
+    AfterRestoration = 5  // 복원 완료
 }
 
 public enum Grade
@@ -28,6 +29,13 @@ public enum Grade
     Rare = 1,        // 레어
     Unique = 2,      // 유니크
     Legendary = 3    // 레전더리
+}
+
+public enum Authenticity
+{
+    Unknown = -1,
+    Real = 1,
+    Fake = 0
 }
 
 // ======================================================
@@ -109,6 +117,9 @@ public class DisplayedItemData
     public ItemState itemState;
     public int itemKey;
     public int itemCatalogKey;
+    public float revealedFraud; // -1 미열람, float 일반이면 열람 된거
+    public float revealedWellCollect;
+    public float revealedClumsy;
 }
 
 [System.Serializable]
@@ -127,7 +138,7 @@ public class NewsData
     public string newsDescription;
     public int affectedPrice;
     public string affectedCategoryName;
-    public int amount;
+    public string amount;
 }
 
 [System.Serializable]
@@ -191,7 +202,7 @@ public class DealData
     public int itemCatalogKey;
     public int foundGrade;
     public int foundFlawEa;
-    public bool isAuthenticityFound;
+    public int isAuthenticityFound;
     public int customerKey;
 }
 
@@ -217,7 +228,7 @@ public class DealActionResponse
     public int totalAppraisedPrice;
     public string changedPurchasedPriceByAction;
     public string changedAppraisedPriceByAction;
-    public Grade foundGrade;
+    public int foundGrade;
     public int foundFlawEa;
     public bool isAuthenticityFound;
     public int leftMoney;

@@ -200,7 +200,7 @@ Response JSON (200 OK)
 }
 // 클라이언트: 뉴스 리스트를 UI에 표시 (최대 0~3개)
 
-8. 고객 정보 드러남 (Reveal Specific Customer Attribute)
+8. 고객 정보 드러남 (Reveal Specific Customer Attribute) 고객 힌트
 PATCH /customer/reveal
 -------------------------------------
 Request JSON
@@ -246,7 +246,7 @@ Response JSON (200 OK)
 
 
 
-10. 하루 거래 3개 미리 생성 (Generate Daily Deals)
+10. 하루 거래 3개 미리 생성 (Generate Daily Deals) // 동일한 고객이면 안 됨!!
 POST /deal/generateDailyDeals
 -------------------------------------
 Request JSON
@@ -267,7 +267,10 @@ Response JSON (200 OK)
             "foundGrade": 0,
             "foundFlawEa": 0,
             "isAuthenticityFound": false,
-            "customerKey": 89
+            "customerKey": 89,
+	    "revealedFraud":0.58,
+	    "revealedWellCollect":0.76,
+	    "revealedClumsy":-1 // -1이면 아직 미열람 상태라는 뜻
         },
         {
             "drcKey": 202,
@@ -279,7 +282,10 @@ Response JSON (200 OK)
             "foundGrade": 0,
             "foundFlawEa": 0,
             "isAuthenticityFound": false,
-            "customerKey": 75
+            "customerKey": 75,
+	    "revealedFraud":0.58,
+	    "revealedWellCollect":0.76,
+	    "revealedClumsy":-1 // -1이면 아직 미열람 상태라는 뜻
         },
         {
             "drcKey": 203,
@@ -291,7 +297,10 @@ Response JSON (200 OK)
             "foundGrade": 0,
             "foundFlawEa": 0,
             "isAuthenticityFound": false,
-            "customerKey": 49
+            "customerKey": 49,
+	    "revealedFraud":0.58,
+	    "revealedWellCollect":0.76,
+	    "revealedClumsy":-1 // -1이면 아직 미열람 상태라는 뜻
         }
     ]
 }
