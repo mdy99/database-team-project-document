@@ -36,7 +36,6 @@ POST /game-session/new
 -------------------------------------
 Request JSON
 {
-    "sessionToken": "string",
     "nickname": "string",
     "shopName": "string"
 }
@@ -60,7 +59,6 @@ POST /game-session/latest
 -------------------------------------
 Request JSON
 {
-    "sessionToken": "string"
 }
 
 Response JSON (200 OK)
@@ -81,7 +79,6 @@ GET /catalog/initialData
 -------------------------------------
 Request JSON
 {
-    "sessionToken": "string"
 }  
 Response JSON (200 OK)
 {
@@ -122,7 +119,6 @@ GET /display/currentAll
 -------------------------------------
 Request JSON
 {
-    "sessionToken": "string"
 }
 
 Response JSON (200 OK)
@@ -172,7 +168,6 @@ GET /news/current
 -------------------------------------
 Request JSON
 {
-    "sessionToken": "string"
 }
 
 Response JSON (200 OK)
@@ -205,7 +200,6 @@ PATCH /customer/reveal
 -------------------------------------
 Request JSON
 {
-    "sessionToken": "string",
     "customerKey": 89,
     "attribute": "FRAUD",     // 공개 요청할 속성 ("FRAUD", "WELL_COLLECT", "CLUMSY")
 }
@@ -222,12 +216,10 @@ Response JSON (200 OK)
 
 
 9. 아이템 힌트 조회 (Get Random Item Hint)
-GET /item/getHints
+GET /item/getHints?itemKey=301
 -------------------------------------
 Request JSON
 {
-    "sessionToken": "string",
-    "itemKey": 301,
 }
 Response JSON (200 OK)
 {
@@ -251,7 +243,6 @@ POST /deal/generateDailyDeals
 -------------------------------------
 Request JSON
 {
-    "sessionToken": "string"
 }
 
 Response JSON (200 OK)
@@ -311,7 +302,6 @@ POST /deal/action
 -------------------------------------
 Request JSON
 {
-    "sessionToken": "string",
     "drcKey": 201,
     "actionType": "FINDFLAW",   // "FINDFLAW", "AUTHCHECK", "APPRAISE"
     "actionLevel": 2,            // 액션 레벨 (1, 2, 3)
@@ -341,7 +331,6 @@ POST /deal/complete
 -------------------------------------
 Request JSON
 {
-    "sessionToken": "string",
     "drcKey": 201,
     "itemKey": 301
 }
@@ -379,7 +368,6 @@ POST /deal/cancel
 -------------------------------------
 JSON Request
 {
-    "sessionToken": "string",
     "drcKey": 201,
     "itemKey": 301
 }   
@@ -395,7 +383,6 @@ POST /item/action
 -------------------------------------
 JSON Request
 {
-    "sessionToken": "string",
     "actionType": "restore",   // "restore","auction" 
     "itemKey": 301
 }
@@ -413,7 +400,6 @@ POST /item/result
 -------------------------------------
 JSON Request
 {
-    "sessionToken": "string",
     "actionResultItemKeys": [
         {
             "itemKey": 301
@@ -464,7 +450,6 @@ POST /item/sellStart
 -------------------------------------
 JSON Request
 {
-    "sessionToken": "string",
     "itemKey": 301,
     "customerKey": 89,
 }
@@ -489,7 +474,6 @@ POST /item/sellComplete
 -------------------------------------   
 JSON Request
 {
-    "sessionToken": "string",
     "itemKey": 301,
     "customerKey": 89,
 }
@@ -513,7 +497,6 @@ POST /loan/update
 -------------------------------------
 JSON Request
 {
-    "sessionToken": "string",
     "debtType": "PERSONAL",   // "PERSONAL" or "PAWNSHOP"
     "amount": 100000          // 양수: 대출(빌리기),음수: 상환(갚기)
 }
@@ -540,7 +523,6 @@ POST /day/next
 -------------------------------------
 JSON Request
 {
-    "sessionToken": "string"
 }       
 Response JSON (200 OK)
 {
@@ -569,7 +551,6 @@ GET /worldRecords
 -------------------------------------
 JSON Request
 {
-    "sessionToken": "string"
 }
 Response JSON (200 OK)
 {
@@ -604,7 +585,6 @@ POST /game/checkEnd
 -------------------------------------
 JSON Request
 {
-    "sessionToken": "string"
 }
 Response JSON (200 OK)
 {
@@ -630,7 +610,6 @@ POST /player/logout
 -------------------------------------
 JSON Request
 {
-    "sessionToken": "string"
 }
 Response JSON (200 OK)
 {
