@@ -117,9 +117,6 @@ public class DisplayedItemData
     public ItemState itemState;
     public int itemKey;
     public int itemCatalogKey;
-    public float revealedFraud; // -1 미열람, float 일반이면 열람 된거
-    public float revealedWellCollect;
-    public float revealedClumsy;
 }
 
 [System.Serializable]
@@ -204,6 +201,9 @@ public class DealData
     public int foundFlawEa;
     public int isAuthenticityFound;
     public int customerKey;
+    public float revealedFraud; // -1 미열람, float 일반이면 열람 된거
+    public float revealedWellCollect;
+    public float revealedClumsy;
 }
 
 [System.Serializable]
