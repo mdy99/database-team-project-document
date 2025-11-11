@@ -137,7 +137,7 @@ Response JSON (200 OK)
             "sellerName": "루이스",
             "foundGrade": 2,
             "foundFlawEa": 1,
-            "authenticity": 1,         // 1=진짜, 0=가짜, -1=미발견
+            "authenticity": 1,         // 1=진짜, 0=가짜, -1=미발견. 서버에서 처리해서 줘야 함
             "itemState": 1,            // OnDisplay
             "itemKey": 301,
             "itemCatalogKey": 45
