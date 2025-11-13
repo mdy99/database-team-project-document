@@ -23,8 +23,7 @@ Request JSON
 
 Response JSON (200 OK)
 {
-    "sessionToken": "string",
-    "playerId": "string"
+    "sessionToken": "string"
 }
 // 클라이언트: GameSessionData에 저장
 // PlayerRegisterLoginRequest
