@@ -1,0 +1,25 @@
+변경 사항
+CREATE TABLE GAME_SESSION (
+    GAME_SESSION_KEY NUMBER(9) GENERATED AS IDENTITY -- 대리 키, 1부터 자동 증가
+        CONSTRAINT PK_GAME_SESSION PRIMARY KEY,
+    PLAYER_KEY NUMBER(9),
+        CONSTRAINT FK_GAME_SESSION_PLAYER FOREIGN KEY (PLAYER_KEY) REFERENCES PLAYER(PLAYER_KEY),
+    DAY_COUNT NUMBER(5) DEFAULT 1, -- 최대 10^5일까지 저장 가능
+        CONSTRAINT CK_DAY_COUNT_NOTNEG CHECK(DAY_COUNT>=1),
+    MONEY NUMBER(9) DEFAULT 50000, -- 최대 10^9짜리 돈까지 저장 가능
+        -- CONSTRAINT CK_MONEY_NOTNEG CHECK(MONEY>=0) <<<<<<<<<<<<<<<<<<<
+: -- CONSTRAINT CK_MONEY_NOTNEG CHECK(MONEY>=0) 를 제거
+각 행동은 각 행동까지만 하고
+클라에서 게임 오버 관련 행동을 할 때, 추가로 게임이 끝났는지 물어보려고 함.(매번 묻는 건 번거로움)
+그게 동작하려면, MONEY가 음수가 될 수 있어야 함,
+EX. 머니가 보니까 -1,500원이 되어있었다. 이거 게임 오버다.
+=> CK_MONEY_NOTNET를 삭제해야 함
+
+
+README
+- 경매
+      경매 출품 중에는 아이템이 잠금 상태가 되어, 해당 전시장 위치를 사용할 수 없다.
+      경매에는 2일이 걸린다.
+      경매가 완료 되면, 아이템은 전시장에서 사라진다. 정산금 즉시 지급
+=> 경매 1일 정산 1일 => 경매 2일
+플레이어 입장에서 비직관적이라 바꿈

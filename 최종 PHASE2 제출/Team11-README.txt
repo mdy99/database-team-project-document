@@ -1,10 +1,25 @@
 README.txt
 
+	[ 전체 목차 ]
+
+ 1. SQL 실행 순서
+ 2. 20개의 Query문들
+ 3. 테이블 전체 삭제
+ 4. 간단 기획 설명
+ 5. 세부 기획 목차
+ 6. 세부 기획
+ 7. SQL 쿼리문 설명 (Team11-Phase2-3.sql 설명)
+
+
+
 						[ SQL 실행 순서 ]
-1. CREATE_TABLE_DDL.sql
-2. INSERT_RECORD_ALL.sql
-						[ 테이블 전체 삭제를 원한다면 ]
-1. DELETE_TABLE_ALL.sql
+1. Team11-Phase2-1.sql
+2. Team11-Phase2-2.sql
+						[ 20개의 Query문들 ]
+1. Team11-Phase2-3.sql
+
+						[ 테이블 전체 삭제 ]
+1. Team11-DELETE_TABLE_ALL.sql
 
 
 						[ 간단 기획 설명 ]
@@ -15,9 +30,7 @@ README.txt
 이 과정에서 대출을 받거나, 경매에 아이템을 내놓거나 기습 이벤트(뉴스)가 발생할 수 있다.
 
 이자를 못 내게 되면, 게임 오버
-개인 빚을 모두 갚으면 게임 클리어
-
-게임을 클리어하면, 세계 기록에 기록을 남길 수 있다.
+(전당포 빚 포함) 개인 빚을 모두 갚으면 게임 클리어
 
 
 						[ 세부 기획 목차 ]
@@ -54,15 +67,14 @@ README.txt
 	- 뉴스 이벤트 발생
 		: 플레이어의 DAY_COUNT가 1일차를 제외한 7의 배수일차일 때마다 이벤트가 발생합니다.
 			이벤트가 발생하면, 이전 이벤트가 있다면, 이전 이벤트는 삭제합니다.
-			뉴스 이벤트를 임의의 카탈로그_ID 랜덤하게 1~3개의 이벤트를 생성시킨 뒤, DB에 넣습니다 (이벤트는 중복이 가능합니다.)
-		이벤트 한번에 생성되는 개수
-		0: 30 %
-		1: 40 %
-		2: 20 %
-		3: 10 %
-
-
+			뉴스 이벤트를 임의의 카탈로그_ID 랜덤하게 1~3개의 이벤트를 생성시킨 뒤, DB에 넣습니다.
+				이벤트 한번에 생성되는 개수
+					0개: 	30 %
+					1개: 	40 %
+					2개:	20 %
+					3개: 	10 %
 			뉴스이벤트는 최초 제시가, 거래가, 감정가, 최종 판매가 중 하나에 영향을 끼치며, 영향의 정도는 임의의 -50~50(%)입니다.
+
 	-손님 접수(매일 3명)
 		- 판매
 			: 전시 중인 아이템이 있음
@@ -132,7 +144,7 @@ README.txt
 			- 잘수집정도 0.0~1.0
 			- 부주의함 0.0~1.0
 		힌트의 정렬 순서는 사기정도, 잘수집정도, 부주의함
-		그 고객으로부터 한번 열람한 정보는 다음에 방문 했을 때에도 여전히 확인 가능함(PLAYER_CUSTOMER_HIDDEN_DISCOVERED)
+		그 고객으로부터 한번 열람한 정보는 다음에 방문 했을 때에도 여전히 확인 가능함(CUSTOMER_HIDDEN_DISCOVERED_IN_GAME_SESSION)
 		
 
 	- 흠 찾기 (여러 번 시행 가능)
@@ -186,7 +198,7 @@ README.txt
 [거래 후 동작]
 
   [ 필드 ]
-	- 최초 제시가 ▶ 최초 제시가 * (이벤트 수치(적용 중인 뉴스)* ~최대 3개)
+	- 최초 제시가 ▶ 최초 제시가 * (이벤트 수치(적용 중인 뉴스)* ~최대 3개) (고객이 최초 제시할 때 적용)
 
 	- 구매가 ▶ 최초 제시가 * (1 - 밝혀낸 흠 개수 * 5%) * 감정 등급(1.0~1.7) * (1 - 거래 중 진품 여부(FALSE =1) * 50%)   * (이벤트 수치(적용 중인 뉴스)* ~최대 3개)
 
@@ -242,17 +254,15 @@ README.txt
 		복원 중에는 아이템이 잠금 상태가 되어, 해당 전시장 위치를 사용할 수 없습니다.
 
 	- 경매
-		: 경매는 3의 배수 일차마다 열린다.
 		경매 출품 중에는 아이템이 잠금 상태가 되어, 해당 전시장 위치를 사용할 수 없다.
-		경매에는 1일이 걸린다.
-		경매가 완료 되면, 아이템은 전시장에서 사라진다. 정산금을 알려준다.
-		경매가 완료 된 후, 1일 후 정산금이 들어온다.
+		경매에는 2일이 걸린다.
+		경매가 완료 되면, 아이템은 전시장에서 사라진다. 정산금 즉시 지급
 
 		경매의 경우, 거래 - 구매 고객에 고객키로 0번(경매인)이 들어간다.
         [DB] DEAL_RECORD 테이블의 BOUGHT_DATE 속성에 GAME_SESSION 테이블의 DAY_COUNT 값을 대입
 
 
-	- 대출
+	- 게임 내 대출(전당포 빚)
 		: 매일 [거래 후]일 때, 대출을 받을 수 있다
 			- [ 2,000G ] 
 			- [ 1,000G ] 
@@ -261,31 +271,31 @@ README.txt
 
 	- 대출 상환하기
 		[거래 후]에는 대출 빚을 상환할 수 있다.		
-		- 개인 빚( 기본 500,000 골드 )
+		- 개인 빚( 기본 500,000 골드 ) 				<< GAME_SESSION 테이블의 PERSONAL_DEBT
 			: 원하는 금액만큼 입력 후 상환 버튼을 누른다
-		- 대출 빚
-			- 각 대출이 표시 된다.
-			- 대출 객체를 선택하면, 
-			- 대출 빚 상환 버튼 아래에  개인 빚, 전당포 빚을 띄운다. << GAME_SESSION 테이블의 PERSONAL_DEBT, PAWNSHOP_DEBT 이 쓰이는 곳
+			(주마다 이자 발생: 총 대출 빚의 0.05%)
+			(게임을 클리어하기 위한 목표)
+		- 전당포 빚 								<< GAME_SESSION 테이블의 PAWNSHOP_DEBT
 			: 원하는 금액만큼 입력 후 상환 버튼을 누른다.
+			(일마다 이자 발생: 총 대출 빚의 5%)
 
 	- 다음 날 넘어가기
-      - 정산
-         + 오늘 시작 잔금 << 속성 추가해야 함
-         - 오늘 구매 금액 << 속성 추가해야 함
-         + 오늘 판매 금액 << 기존 Sold_date 속성 이용
-         - 대출 빚 이자 (총 대출 빚의 5%) << 기존 Pawnshop debt 속성 이용
-         ------------------------------
-         오늘 최종 잔금 표시
+	      - 정산
+	         +	오늘 시작 잔금
+	         -	오늘 구매 금액 
+	         +	오늘 판매 금액 
+	         -	전당포 빚 이자
+	         ------------------------------
+	         오늘 최종 잔금 표시
 
-      - 7의 배수 일차마다 정산
-         + 오늘 시작 잔금
-         - 오늘 구매 금액
-         + 오늘 판매 금액
-         - 개인 빚 이자 (개인 빚의 0.05%) ← (유저 -개인 빚) * 0.005 << 기존 Personal debt 속성 이용
-         - 대출 빚 이자 (총 대출 빚의 5%) ← SUM(대출 - 남은 대출 금액) * 0.05 << 기존 Pawnshop debt 속성 이용
-         ------------------------------
-         오늘 최종 잔금 표시
+	      - 7의 배수 일차마다 정산
+	         +	오늘 시작 잔금
+	         -	오늘 구매 금액
+	         +	오늘 판매 금액
+	         -	개인 빚 이자 
+	         -	전당포 빚 이자
+	         ------------------------------
+	         오늘 최종 잔금 표시
 
 		개인 빚은 이자율이 적은 대신 게임을 클리어하는데 필요
 		전당포 빚은 이자율이 높고 매일 내야 함.
@@ -295,17 +305,11 @@ README.txt
 
 [게임 외부]
 	- 게임 오버
-		: 개인 빚에 대한 이자를 못 내게 되면, 게임이 오버 됩니다.
-            DB 속 GAME_SESSION 테이블의 CLEAR_END_DAY_COUNT 속성에 게임 오버했을 당시의 게임 일수의 음수 값을 넣습니다.
-			DB 속 거래, 아이템은 유지됩니다.
-			DB 속 아이템의 활성화 여부가 비활성화가 됩니다.
-			DB 속 거래의 활성화 여부가 비활성화가 됩니다.
+		: 빚에 대한 이자를 못 내게 되면, 게임이 오버 됩니다.
+            DB 속 GAME_SESSION 테이블의 GAME_END_DAY_COUNT 속성에 게임 오버했을 당시의 게임 일수의 음수 값을 넣습니다.
 	- 게임 클리어
 		- 대출(전당포) 빚과 개인 빚을 모두 갚으면, 게임을 클리어하게 됩니다.
-            DB 속 GAME_SESSION의 CLEAR_DAY_COUNT는 클리어 한 시점의 DAY_COUNT, CLEAR_DATE는 현재 날짜를 입력합니다.
-			DB 속 거래, 아이템은 유지됩니다.
-			DB 속 아이템의 활성화 여부가 비활성화가 됩니다.
-			DB 속 거래의 활성화 여부가 비활성화가 됩니다.
+            DB 속 GAME_SESSION의 GAME_END_DAY_COUNT는 클리어 한 시점의 DAY_COUNT, GAME_END_DATE는 현재 날짜를 입력합니다.
 	- 로그인/회원가입
 		- 회원가입
 			회원 가입 버튼을 누른다
@@ -319,201 +323,9 @@ README.txt
 		세계 기록 클릭 시 팝업으로 상세 팝업이 뜬다
 
 
-					[ DB 테이블 목차 ]
- 1. 유저(PLAYER)
- 2. 고객(CUSTOMER)
- 3. 아이템 카테고리(ITEM_CATEGORY) : 20개 레코드(상세 설명은 아래 엔티티)
- 4. 아이템 카탈로그(ITEM_CATALOG)
- 5. 아이템(EXISTING_ITEM)
- 6. 거래(DEAL_RECORD)
- 7. 플레이어-고객 비밀 발견(PLAYER_CUSTOMER_HIDDEN_DISCOVERED) <관계>
- 8. 플레이어-아이템 전시(PLAYER_ITEM_DISPLAY) <관계>
- 9. 세계 기록(WORLD_RECORD)
-10. 대출(LOAN)
-11. 뉴스(EXISTING_NEWS)
-12. 뉴스 카탈로그(NEWS_CATALOG)
-13. 로그인 기록(LOGIN_LOG): <<WEAK_ENTITY>>
 
 
-					[ DB 엔티티 ]
-CREATE TABLE ITEM_CATEGORY(
-    CATEGORY_KEY NUMBER(9) -- 대리 키
-        CONSTRAINT PK_ITEM_CATEGORY PRIMARY KEY,
-    CATEGORY_NAME VARCHAR2(10 CHAR) -- 10글자 내 이름(한글 고려)
-);
-
-CREATE TABLE PLAYER(
-    PLAYER_KEY NUMBER(9) GENERATED AS IDENTITY -- 대리 키, 1부터 자동 증가
-        CONSTRAINT PK_PLAYER PRIMARY KEY,
-    PLAYER_ID VARCHAR2(30) UNIQUE NOT NULL, --최대 30글자 영문 아이디.
-    HASHED_PW VARCHAR2(81), -- SHA256 해시(HEX, 64자) + 구분자 + Salt(16자) 고려
-    SESSION_TOKEN VARCHAR2(64) UNIQUE, -- 로그인 세션 구분용 토큰. 랜덤64B 문자열
-    LAST_ACTIVITY DATE DEFAULT SYSDATE NOT NULL -- 마지막 행동 시간. 매 요청마다 업데이트 하기
-);
-
--- TODO: 세션 만료 주기적으로 실행 가능한지 확인
-
-CREATE TABLE GAME_SESSION (
-    GAME_SESSION_KEY NUMBER(9) GENERATED AS IDENTITY -- 대리 키, 1부터 자동 증가
-        CONSTRAINT PK_GAME_SESSION PRIMARY KEY,
-    PLAYER_KEY NUMBER(9),
-        CONSTRAINT FK_GAME_SESSION_PLAYER FOREIGN KEY (PLAYER_KEY) REFERENCES PLAYER(PLAYER_KEY),
-    DAY_COUNT NUMBER(5) DEFAULT 1, -- 최대 10^5일까지 저장 가능
-        CONSTRAINT CK_DAY_COUNT_NOTNEG CHECK(DAY_COUNT>=1),
-    MONEY NUMBER(9) DEFAULT 50000, -- 최대 10^9짜리 돈까지 저장 가능
-        CONSTRAINT CK_MONEY_NOTNEG CHECK(MONEY>=0),
-    PERSONAL_DEBT NUMBER(9) DEFAULT 500000, -- 남은(갚아야 하는) 개인 빚
-        CONSTRAINT CK_PERSONAL_DEBT_NOTNEG CHECK(PERSONAL_DEBT>=0),
-    PAWNSHOP_DEBT NUMBER(9) DEFAULT 0, -- 남은(갚아야 하는) 전당포 빚
-        CONSTRAINT CK_PAWNSHOP_DEBT_NOTNEG CHECK(PAWNSHOP_DEBT>=0),
-    UNLOCKED_SHOWCASE_COUNT NUMBER(1) DEFAULT 2, -- 현재 해금한 쇼케이스 숫자 최소2 최대 8
-        CONSTRAINT CK_UNLOCKED_SHOWCASE_COUNT_RANGE CHECK (UNLOCKED_SHOWCASE_COUNT BETWEEN 2 AND 8),
-    NICKNAME VARCHAR2(10 CHAR), -- 10글자 내 이름(한글 고려)
-    SHOP_NAME VARCHAR2(10 CHAR), -- 10글자 내 상점 이름(한글 고려)
-    -- 클리어 나온 뒤 기록
-    CLEAR_DAY_COUNT NUMBER(9) DEFAULT NULL, -- 클리어했을 당시 게임 일수
-    CLEAR_DATE DATE DEFAULT NULL -- 클리어 당시 현실 날짜
-);
-
-
-CREATE TABLE CUSTOMER_CATALOG(
-    CUSTOMER_KEY NUMBER(9) -- 대리 키
-        CONSTRAINT PK_CUSTOMER PRIMARY KEY,
-    CUSTOMER_NAME VARCHAR2(3 CHAR) NOT NULL, -- 한글 3글자 이름
-    CATEGORY_KEY NUMBER(9) NOT NULL REFERENCES ITEM_CATEGORY(CATEGORY_KEY), -- 선호 카테고리 아이디
-    IMG_ID VARCHAR2(10) NOT NULL, --이미지 아이디 CIM00001~CIM99999
-        CONSTRAINT CK_CUSTOMER_IMG_ID_FORMAT CHECK(REGEXP_LIKE(IMG_ID, '^CIM[0-9]{5}$')),
-    FRAUD NUMBER(5,4) DEFAULT 0 NOT NULL, -- 사기 잘 칠 것 같은 정도 0.0000 ~ 1.0000
-        CONSTRAINT CK_FRAUD_RANGE CHECK(FRAUD BETWEEN 0.0 AND 1.0),
-    WELL_COLLECT NUMBER(5,4) DEFAULT 0 NOT NULL, -- 잘 수집할 것 같은 정도 0.0000 ~ 1.0000
-        CONSTRAINT CK_WELL_COLLECT_RANGE CHECK(WELL_COLLECT BETWEEN 0.0 AND 1.0),
-    CLUMSY NUMBER(5,4) DEFAULT 0 NOT NULL, -- 흠 많이 낼 것 같은 정도 0.0000 ~ 1.0000
-        CONSTRAINT CK_CLUMSY_RANGE CHECK(CLUMSY BETWEEN 0.0 AND 1.0)
-);
-
-CREATE TABLE ITEM_CATALOG(
-    ITEM_CATALOG_KEY NUMBER(9) -- 대리 키
-        CONSTRAINT PK_ITEM_CATALOG PRIMARY KEY,
-    ITEM_CATALOG_NAME VARCHAR2(20 CHAR) NOT NULL UNIQUE,
-    IMG_ID VARCHAR2(10) NOT NULL, --이미지 아이디 ITM00001~ITM99999
-        CONSTRAINT CK_ITEM_CATALOG_IMG_ID_FORMAT CHECK(REGEXP_LIKE(IMG_ID, '^ITM[0-9]{5}$')),
-    CATEGORY_KEY NUMBER(9) NOT NULL REFERENCES ITEM_CATEGORY(CATEGORY_KEY), -- 아이템의 카테고리 아이디
-    BASE_PRICE NUMBER(9) NOT NULL
-);
-
-CREATE TABLE EXISTING_ITEM(
-    ITEM_KEY NUMBER(9) GENERATED AS IDENTITY -- 대리 키, 1부터 자동 증가
-        CONSTRAINT PK_EXISTING_ITEM PRIMARY KEY,
-    GAME_SESSION_KEY NUMBER(9) NOT NULL REFERENCES GAME_SESSION(GAME_SESSION_KEY), --FK 플레이어 키. 플레이어에게 할당된 아이템
-    ITEM_CATALOG_KEY NUMBER(9) NOT NULL REFERENCES ITEM_CATALOG(ITEM_CATALOG_KEY), -- 카탈로그 키
-    GRADE NUMBER(1) NOT NULL, -- 숨겨진 등급. 일반(0), 레어(1),유니크(2),레전더리(3)
-        CONSTRAINT CK_EXISTING_ITEM_GRADE_RANGE CHECK (GRADE BETWEEN 0 AND 3),
-    FOUND_GRADE NUMBER(1) DEFAULT 0 NOT NULL, -- 숨겨진 등급. 일반(0), 레어(1),유니크(2),레전더리(3)
-        CONSTRAINT CK_EXISTING_ITEM_FOUND_GRADE_RANGE CHECK (FOUND_GRADE BETWEEN 0 AND 3),
-    FLAW_EA NUMBER(2) NOT NULL, -- 흠 개수. 0~14개까지 존재 가능
-        CONSTRAINT CK_EXISTING_ITEM_FLAW_EA_RANGE CHECK (FLAW_EA BETWEEN 0 AND 14),
-    FOUND_FLAW_EA NUMBER(2) DEFAULT 0 NOT NULL, -- 플레이어가 찾은 흠 개수. 0~14개까지 존재 가능
-        CONSTRAINT CK_EXISTING_ITEM_FOUND_FLAW_EA_RANGE CHECK (FOUND_FLAW_EA BETWEEN 0 AND 14),
-    AUTHENTICITY CHAR(1) NOT NULL, -- 진위 여부, BOOL이 없으므로 Y OR N CHAR로 저장
-        CONSTRAINT CK_EXISTING_ITEM_AUTHENTICITY_RANGE CHECK (AUTHENTICITY IN ('Y','N')),
-    IS_AUTHENTICITY_FOUND CHAR(1) DEFAULT 'N' NOT NULL, -- 플레이어가 진위 여부를 찾아내었는지 여부
-        CONSTRAINT CK_EXISTING_ITEM_FOUND_AUTHENTICITY_RANGE CHECK (IS_AUTHENTICITY_FOUND IN ('Y','N')),
-    ITEM_STATE NUMBER(1) DEFAULT 0 NOT NULL, -- 아이템 진행 상황
-        CONSTRAINT CK_EXISTING_ITEM_STATE_RANGE CHECK (
-            ITEM_STATE IN (
-                0, -- 생성 됨
-                1, -- 전시 중
-                2, -- 복원 중
-                3, -- 경매 중
-                4  -- 판매 됨
-            )
-        ),
-    ISACTIVE CHAR(1) DEFAULT 'Y' NOT NULL -- 활성화 여부, BOOL이 없으므로 Y OR N CHAR로 저장. 게임오버/클리어 시 비활성화함
-        CONSTRAINT CK_EXISTING_ITEM_ISACTIVE_RANGE CHECK (ISACTIVE IN('Y','N')),
-    CONSTRAINT CK_EXISTING_ITEM_GRADE_EQ_OR_LOWER_THAN_REAL CHECK (FOUND_GRADE <= GRADE),
-    CONSTRAINT CK_EXISTING_ITEM_FLAW_FOUND_EQ_OR_LOWER_THAN_REAL CHECK (FOUND_FLAW_EA <= FLAW_EA)
-);
-
-CREATE TABLE DEAL_RECORD(
-    DRC_KEY NUMBER(9) GENERATED AS IDENTITY -- 대리 키, 1부터 자동 증가
-        CONSTRAINT PK_DEAL_RECORD PRIMARY KEY,
-    GAME_SESSION_KEY NUMBER(9) NOT NULL REFERENCES GAME_SESSION(GAME_SESSION_KEY), --FK 플레이어 키
-    SELLER_KEY NUMBER(9) NOT NULL REFERENCES CUSTOMER_CATALOG(CUSTOMER_KEY), --FK 물건 판매 고객 키
-    BUYER_KEY NUMBER(9) REFERENCES CUSTOMER_CATALOG(CUSTOMER_KEY), -- FK 물건 구매 고객 키. 판매 전까지는 NULL
-    ITEM_KEY NUMBER(9) NOT NULL UNIQUE REFERENCES EXISTING_ITEM(ITEM_KEY), -- FK 아이템 키
-    ASKING_PRICE NUMBER(9) DEFAULT NULL, -- 최초 제시가
-	CONSTRAINT CK_ASKING_PRICE_NOTNEG CHECK(ASKING_PRICE>=0),
-    PURCHASE_PRICE NUMBER(9) DEFAULT NULL, -- 구매가
-	CONSTRAINT CK_PURCHASE_PRICE_NOTNEG CHECK(PURCHASE_PRICE>=0),
-    APPRAISED_PRICE NUMBER(9) DEFAULT NULL, -- 감정가
-	CONSTRAINT CK_APPRAISED_PRICE_NOTNEG CHECK(APPRAISED_PRICE>=0),
-    SELLING_PRICE NUMBER(9) DEFAULT NULL, -- 최종 판매가
-	CONSTRAINT CK_SELLING_PRICE_NOTNEG CHECK(SELLING_PRICE>=0),
-    ISACTIVE CHAR(1) DEFAULT 'Y' NOT NULL, -- 진위 여부, BOOL이 없으므로 Y OR N CHAR로 저장
-        CONSTRAINT CK_DEAL_RECORD_ISACTIVE_RANGE CHECK (ISACTIVE IN ('Y','N')),
-    SOLD_DATE NUMBER(5), -- 판매한 게임 내 일수. 판매한 날짜에 채움
-    CONSTRAINT CK_BUYER_KEY CHECK(BUYER_KEY IS NULL OR BUYER_KEY != SELLER_KEY)--판매자와 구매자는 달라야 함
-);
-
-CREATE TABLE CUSTOMER_HIDDEN_DISCOVERED_IN_GAME_SESSION(
-    DISCOVERED_KEY NUMBER(9) GENERATED AS IDENTITY -- 대리 키, 1부터 자동 증가
-        CONSTRAINT PK_CUSTOMER_HIDDEN_DISCOVERED_IN_GAME_SESSION PRIMARY KEY,
-    GAME_SESSION_KEY NUMBER(9) NOT NULL,
-        CONSTRAINT FK_CUSTOMER_HIDDEN_DISCOVERED_IN_GAME_SESSION_GAME_SESSION FOREIGN KEY (GAME_SESSION_KEY) REFERENCES GAME_SESSION(GAME_SESSION_KEY),
-    CUSTOMER_KEY NUMBER(9) NOT NULL,
-        CONSTRAINT FK_CUSTOMER_HIDDEN_DISCOVERED_IN_GAME_SESSION_CUSTOMER FOREIGN KEY (CUSTOMER_KEY) REFERENCES CUSTOMER_CATALOG(CUSTOMER_KEY),
-    HINT_REVEALED_FLAG NUMBER(1) DEFAULT 0 NOT NULL, -- 고객 뒷조사로 열은 고객 힌트 열람 여부. 힌트 3개에 대하여 이진수 "000~111"로 저장
-        CONSTRAINT CK_CUSTOMER_HIDDEN_DISCOVERED_IN_GAME_SESSION_HINT_REVEALED_FLAG CHECK (HINT_REVEALED_FLAG BETWEEN 0 AND 7),
-    CONSTRAINT UQ_CUSTOMER_HIDDEN_DISCOVERED_IN_GAME_SESSION_CUSTOMER UNIQUE(GAME_SESSION_KEY, CUSTOMER_KEY) --중복 고객 막기
-);
-
-CREATE TABLE GAME_SESSION_ITEM_DISPLAY(
-    DISPLAY_KEY NUMBER(9) GENERATED AS IDENTITY -- 대리 키, 1부터 자동 증가
-        CONSTRAINT PK_GAME_SESSION_ITEM_DISPLAY PRIMARY KEY,    
-    GAME_SESSION_KEY NUMBER(9) NOT NULL,
-        CONSTRAINT FK_GAME_SESSION_ITEM_DISPLAY_GAME_SESSION FOREIGN KEY (GAME_SESSION_KEY) REFERENCES GAME_SESSION(GAME_SESSION_KEY),
-    ITEM_KEY NUMBER(9) NOT NULL,
-        CONSTRAINT FK_GAME_SESSION_ITEM_DISPLAY_ITEM FOREIGN KEY (ITEM_KEY) REFERENCES EXISTING_ITEM(ITEM_KEY),
-    DISPLAY_POS NUMBER(1) NOT NULL -- 아이템의 쇼케이스 내 위치
-        CONSTRAINT CK_DISPLAY_POS_RANGE CHECK (DISPLAY_POS BETWEEN 0 AND 7),
-    CONSTRAINT UQ_GAME_SESSION_ITEM_DISPLAY UNIQUE(GAME_SESSION_KEY, DISPLAY_POS), --위치 중복 막기
-    CONSTRAINT UQ_GAME_SESSION_ITEM_DISPLAY_ITEM UNIQUE(GAME_SESSION_KEY, ITEM_KEY) --중복 아이템 막기
-);
-
-CREATE TABLE NEWS_CATALOG(
-    NCT_KEY NUMBER(9) -- 대리 키
-        CONSTRAINT PK_NEWS_CATALOG PRIMARY KEY,
-    NEWS_NAME VARCHAR2(50 CHAR) NOT NULL UNIQUE,
-    AFFECTED_PRICE NUMBER(1) NOT NULL -- 영향 받는 최초 제시가(0), 구매가(1), 감정가(2), 최종 판매가(3)
-        CONSTRAINT CK_NEWS_CATALOG_RANGE CHECK (
-        AFFECTED_PRICE IN (
-            0, -- 최초 제시가
-            1, -- 구매가
-            2, -- 감정가
-            3  -- 최종 판매가
-            )
-        ),
-        CATEGORY_KEY NUMBER(9) NOT NULL REFERENCES ITEM_CATEGORY(CATEGORY_KEY), -- 영향받는 카테고리 아이디
-        PLUS_MINUS NUMBER(1) NOT NULL, -- +방향으로 영향 주는지, -방향으로 영향 주는지
-        CONSTRAINT CK_PLUS_MINUS_RANGE CHECK (
-        PLUS_MINUS IN (
-            1, -- PLUS
-            -1 -- MINUS
-            )
-        )
-);
-
-CREATE TABLE EXISTING_NEWS(
-    GAME_SESSION_KEY NUMBER(9) NOT NULL REFERENCES GAME_SESSION(GAME_SESSION_KEY),
-    NCAT_KEY NUMBER(9) NOT NULL REFERENCES NEWS_CATALOG(NCT_KEY),
-    AMOUNT NUMBER(3) NOT NULL, -- 0~999(%) 까지 영향 가능.(실제 들어올 데이터는 몇 십 단위)
-        CONSTRAINT CK_NEWS_AMOUNT_NOTNEG CHECK(AMOUNT>=0),
-    CONSTRAINT PK_EXISTING_NEWS PRIMARY KEY (GAME_SESSION_KEY, NCAT_KEY) 
-);
-
-
-
-[sql 쿼리문 설명]
+								[ SQL 쿼리문 설명 ]
 쿼리문 자체에서 콘솔 입력을 받을 방법은 없는데, JDBC 라이브러리를 쓸 때는 쿼리를 문자열 형태로 넘기므로, 자바 String을 조작할 수 있음.
 JDBC를 활용할 때는, player = 1에서 1을 조회하기를 원하는 Player의 Primary Key로 바꾸어 사용할 것임.
 
@@ -829,28 +641,3 @@ MINUS
 );
 
 임의의 플레이어 (여기서는 1)이 모든 게임 세션에서 아직 발견하지 못한 아이템 종류명을 조회하는 쿼리
-
-
-					[ 테이블이 아닌 관계 ]
-
-
-PLAYER              -<GENERATES>-                   GAME_SESSTION        : (0,n)-(1,1). 유저는 게임 세션을 만든다. 게임은 하나도 만들지 않을 수도 있고 여러 개 만들 수도 있음. 하지만 유저는 게임이 존재하는 한 무조건 존재해야 하고, 게임 하나당 유저는 한명뿐.
-CUSTOMER_CATALOG    -<'S HIDDEN_DISCOVERED_BY>-     GAME_SESSION         : (0,n)-(0,m). 게임 세션은 여러 고객을 발견할 수 있고, 한 고객은 여러 게임 세션에 의해 발견될 수 있음
-
-CUSTOMER_CATALOG    -<BUYS>-                        DEAL_RECORD          : (0,n)-(1,1). 손님은 구매 기록을 남기지 않을 수도, 여러 남길 수도 있다(구매를 하지 않을 수도, 여러 물품을 구매할 수도 있다). 그리고 하나의 거래 기록(구매 기록)은 한 손님당 최소 한개 최대 한개 가능
-CUSTOMER_CATALOG    -<SELLS>-                       DEAL_RECORD          : (0,n)-(1,1). 손님은 판매 기록을 남기지 않을 수도, 여러 남길 수도 있다(판매를 하지 않을 수도, 여러 물품을 판매할 수도 있다). 그리고 하나의 거래 기록(판매 기록)은 한 손님당 최소 한개 최대 한개 가능
-
-DEAL_RECORD         -<IS_INCLUDED_BY>-              GAME_SESSION         : (1,1)-(0,n). 거래 기록은 게임 세션 포함된에다. 모든 거래 기록은 반드시 어떤 게임에 속해야 하고, 동시에 한 게임에만 속해야 한다. 또한 게임은 거래 기록을 하나도 가지고 있지 않을 수도 있고 여러 개를 가질 수도 있음.
-DEAL_RECORD         -<INCLUDES>-                    EXISTING_ITEM        : (1,1)-(0,1). DEAL_RECORD는 반드시 아이템이 할당 되어야 하지만, (1,1) EXISTING_ITEM은 생성되고 난 후, 거래에 아직 참여하지 않았을 수도 있다. 그러므로 (0,1)
-
-EXISTING_ITEM       -<IS_ALLOCATED_BY>-             GAME_SESSION         : (1,1)-(0,n). 아이템은 게임 세션에 할당된다. 플레이어가 게임에서 아이템을 생성하는데, 아직 하나도 생성 안했을 수도, 여러개를 생성했을 수도 있으며, 각 아이템들은 생성이 된다면 해당 게임에만 존속되기에 최소 1번 참여, 최대 1번 참여를 한다.
-EXISTING_ITEM       -<IS_DISPLAYED_BY>-             GAME_SESSION         : (0,1)-(0,8). 아이템은 게임 세션에 보여진다. 플레이어가 게임에서 아이템을 진열할 수 있는데, 아이템들을 하나도 진열하지 않을 수도 있고, 최대 8개까지 진열해 놓을 수도 있다. 각각 아이템들은 해당 진열에 참여할 수도 있고, 참여하지 않을 수도 있으며, 참여 한다면 최대 한번 밖에 되지 않음.
-
-GAME_SESSION        -<IS_AFFECTED_BY>-              EXISTING_NEWS        : (0,3)-(1,1). 게임 세션은 뉴스에 영향을 받는다. 뉴스가 한번도 안뜰 수도 있고, 최대 3개 까지 떠서 영향을 줄 수도 있다. 그리고 각 뉴스는 무조건 하나의 게임 세션 속해야 한다. 따라서 최소 참여 1번 최대 참여 1번이 된다.
-EXISTING_NEWS       -<REALIZES>-                    NEWS_CATALOG         : (1,1)-(0,n). 실제 뉴스(EXISTING_NEWS)는 뉴스 카탈로그(NEWS_CATALOG)를 실체화한다. 각 실제 뉴스는 반드시 하나의 뉴스 카탈로그에 기반해야 하며(1,1), 각 뉴스 카탈로그는 0개 이상의 실제 뉴스에 의해 실체화될 수 있다(0,n).
-
-CUSTOMER_CATALOG    -<LOVES_TO_BUY>-                ITEM_CATEGORY        : (1,1)-(0,n). 고객은 특정 카테고리 아이템을 좋아한다. 고객이 좋아하는 카테고리는 최소 하나는 있어야 하고, 최대 하나 밖에 설정할 수 밖에 없도록 하였고, 아이템 카테고리는 어떠한 고객도 선호하지 않을 수도, 여러명이 선호할 수도 있다.
-EXISTING_ITEM       -<REALIZES>-                    ITEM_CATALOG         : (1,1)-(0,n). 아이템은 카탈로그를 실체화 한다. 아이템이 카탈로그를 실체화 하였다는 건 최소 하나의 카탈로그를 실체화 했다는 얘기이고, 하나의 카탈로그를 실체화 하면서 다른 카탈로그를 동시에 실체화 할수는 없기 때문에, 아이템은 최소 한번 최대 한번 참여가 가능하다. 그리고 카탈로그는 하나도 실체화 되지 않는 카탈로그도 있고, 여러번 실체화 되는 카탈로그도 존재하기 때문에 최소 0번, 최대 n번 참여가 가능하다.
-
-ITEM_CATALOG        -<BELONGS_TO>-                  ITEM_CATEGORY        : (1,1)-(0,n). 아이템 카탈로그(ITEM_CATALOG)는 아이템 카테고리(ITEM_CATEGORY)에 속한다. 각 아이템 카탈로그는 반드시 하나의 아이템 카테고리에 속해야 하며(1,1), 각 아이템 카테고리는 0개 이상의 아이템 카탈로그를 포함할 수 있다(0,n). 예를 들어, 보석 카탈로그는 보석이라는 카테고리 안에 속하니까.
-ITEM_CATEGORY       -<IS_AFFECTED_BY>-              NEWS_CATALOG         : (0,n)-(1,1). 아이템 카테고리(ITEM_CATEGORY)는 뉴스 카탈로그(NEWS_CATALOG)에 의해 영향을 받는다. 예를 들면, 보석 카테고리는 보석 가격 하락 뉴스에 영향을 받는다. 각 아이템 카테고리는 0개 이상의 뉴스 카탈로그로부터 영향을 받을 수 있으며(0,n), 각 뉴스 카탈로그는 반드시 하나의 아이템 카테고리에 영향을 미쳐야 한다(1,1).

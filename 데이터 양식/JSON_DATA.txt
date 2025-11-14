@@ -1,0 +1,619 @@
+1. 회원가입
+POST /player/register
+-------------------------------------
+Request JSON
+{
+    "playerId": "string",
+    "password": "string"
+}
+
+Response JSON (200 OK)
+{} 
+// 클라이언트: 200 코드 수신 시 회원가입 완료 팝업 표시
+// PlayerRegisterLoginRequest
+
+2. 로그인
+POST /player/login
+-------------------------------------
+Request JSON
+{
+    "playerId": "string",
+    "password": "string"
+}
+
+Response JSON (200 OK)
+{
+    "sessionToken": "string"
+}
+// 클라이언트: GameSessionData에 저장
+// PlayerRegisterLoginRequest
+
+
+
+3. 세션(게임) 생성 또는 새 게임 시작
+POST /game-session/new
+-------------------------------------
+Request JSON
+{
+    "nickname": "string",
+    "shopName": "string"
+}
+
+Response JSON (200 OK)
+{
+    "dayCount": 1,
+    "money": 50000,
+    "personalDebt": 500000,
+    "pawnshopDebt": 0,
+    "unlockedShowcaseCount": 2,
+    "nickname": "string",
+    "shopName": "string"
+}
+// 클라이언트: GameSessionData 에 저장 (초기 기본값 세팅)
+
+
+
+4. 가장 최근 게임 세션 불러오기
+POST /game-session/latest
+-------------------------------------
+Request JSON
+{
+}
+
+Response JSON (200 OK)
+{
+    "dayCount": 25,
+    "money": 128000,
+    "personalDebt": 420000,
+    "pawnshopDebt": 10000,
+    "unlockedShowcaseCount": 3,
+    "nickname": "Pawn King",
+    "shopName": "Shiny Deals"
+}
+// 클라이언트: GameSessionData 에 저장
+
+
+5. 초기 카탈로그 데이터 불러오기
+GET /catalog/initialData
+-------------------------------------
+Request JSON
+{
+}  
+Response JSON (200 OK)
+{
+    "itemCatalogs": [
+        {
+            "itemCatalogKey": 45,
+            "itemCatalogName": "골동 도자기",
+            "imgId": "ITM00001",
+            "categoryName": "Antique"
+        },
+        {
+            "itemCatalogKey": 46,
+            "itemCatalogName": "희귀 서적",
+            "imgId": "ITM00002",
+            "categoryName": "Book"
+        }
+    ],
+    "customerCatalogs": [
+        {
+            "customerKey": 89,
+            "customerName": "루이스",
+            "favoriteCategoryName": "Antique",
+            "imgId": "CUS00001"
+        },
+        {
+            "customerKey": 75,
+            "customerName": "에밀리",
+            "favoriteCategoryName": "Book",
+            "imgId": "CUS00002"
+        }
+    ]
+}
+
+
+
+6. 전시장 아이템 전체 조회 (Get All Displayed Items)
+GET /display/currentAll
+-------------------------------------
+Request JSON
+{
+}
+
+Response JSON (200 OK)
+{
+    "displays": [
+        {
+            "displayPositionKey": 0,
+            "askingPrice": 1000,
+            "purchasePrice": 800,
+            "appraisedPrice": 900,
+            "boughtDate": 1,
+            "sellerName": "루이스",
+            "foundGrade": 2,
+            "foundFlawEa": 1,
+            "authenticity": 1,         // 1=진짜, 0=가짜, -1=미발견. 서버에서 처리해서 줘야 함
+            "itemState": 1,            // OnDisplay
+            "itemKey": 301,
+            "itemCatalogKey": 45
+        },
+        {
+            "displayPositionKey": 1,
+            "askingPrice": 1500,
+            "purchasePrice": 1100,
+            "appraisedPrice": 1400,
+            "boughtDate": 3,
+            "sellerName": "에밀리",
+            "foundGrade": 3,
+            "foundFlawEa": 0,
+            "authenticity": -1,        // 아직 진위 미발견
+            "itemState": 2,
+            "itemKey": 302,
+            "itemCatalogKey": 46
+        }
+    ]
+}
+// 클라이언트: displays 배열을 바로 List<DisplayedItemData>로 역직렬화
+// itemCatalogKey만으로 아이템 이름/이미지는 클라이언트의 ItemCatalog 캐시에서 참조
+// 카탈로그는 게임에 영향 주는 데이터 아니니까 가능
+/*
+public class ItemDisplaysWrapData
+public class DisplayedItemData
+*/
+
+
+7. 뉴스(당일 이벤트) 조회
+GET /news/current
+-------------------------------------
+Request JSON
+{
+}
+
+Response JSON (200 OK)
+{
+    "newsList": [
+        {
+            "newsDescription": "귀금속 시장의 가격이 급등하고 있습니다.",
+            "affectedPrice": 3,                  // (0: 최초 제시가, 1: 구매가, 2: 감정가, 3: 판매가)
+            "affectedCategoryName": "Jewelry",   // 카테고리 이름 (예: 도자기, 서적, 회화 등)
+            "amount": 30                         // +30%, 서버에서 부호 계산 완료 후 전달
+        },
+        {
+            "newsDescription": "가짜 예술품 파동으로 미술품 가격이 급락했습니다.",
+            "affectedPrice": 2,
+            "affectedCategoryName": "Art",
+            "amount": -70
+        },
+        {
+            "newsDescription": "희귀 골동품이 경매 시장에서 다시 주목받고 있습니다.",
+            "affectedPrice": 3,
+            "affectedCategoryName": "Antique",
+            "amount": +20
+        }
+    ]
+}
+// 클라이언트: 뉴스 리스트를 UI에 표시 (최대 0~3개)
+
+8. 고객 정보 드러남 (Reveal Specific Customer Attribute) 고객 힌트
+PATCH /customer/reveal
+-------------------------------------
+Request JSON
+{
+    "customerKey": 89,
+    "attribute": "FRAUD",     // 공개 요청할 속성 ("FRAUD", "WELL_COLLECT", "CLUMSY")
+}
+
+Response JSON (200 OK)
+{
+    "attribute": "FRAUD",
+    "value": 0.97,
+    "leftMoney": 49950       // 액션 후 남은 돈
+}
+// UnityWebRequest는 PATCH 메서드 지원 안 함 → POST로 대체하거나 커스텀 구현 필요
+// cost는 서버에서 계산하여 차감
+
+
+
+9. 아이템 힌트 조회 (Get Random Item Hint)
+GET /item/getHints?itemKey=301
+-------------------------------------
+Request JSON
+{
+}
+Response JSON (200 OK)
+{
+    "hintName": "레전더리 확률",     // 힌트 이름
+    "hintValue": "이 아이템은 레전더리일 확률이 20%입니다.",
+    "leftMoney": 49990               // 액션 후 남은 돈
+}
+// 클라이언트: hintValue를 UI에 표시 (단일 힌트만 표시)
+// 서버: 가능한 힌트 중 하나를 무작위로 선택하여 반환
+// cost는 서버에서 계산하여 차감
+// 비용(cost)만큼 플레이어의 돈 차감
+// public class ItemHintRequest
+// public class ItemHintResponse
+
+
+
+
+
+10. 하루 거래 3개 미리 생성 (Generate Daily Deals) // 동일한 고객이면 안 됨!!
+POST /deal/generateDailyDeals
+-------------------------------------
+Request JSON
+{
+}
+
+Response JSON (200 OK)
+{
+    "dailyDeals": [
+        {
+            "drcKey": 201,
+            "askingPrice": 1200,
+            "purchasePrice": 1200,  // 이벤트에 의해 변화된 거 반영
+            "appraisedPrice": 1200, // 이벤트에 의해 변화된 거 반영
+            "itemKey": 301,
+            "itemCatalogKey": 45,
+            "foundGrade": 0,
+            "foundFlawEa": 0,
+            "isAuthenticityFound": false,
+            "customerKey": 89,
+	    "revealedFraud":0.58,
+	    "revealedWellCollect":0.76,
+	    "revealedClumsy":-1 // -1이면 아직 미열람 상태라는 뜻
+        },
+        {
+            "drcKey": 202,
+            "askingPrice": 800,
+            "purchasePrice": 800,
+            "appraisedPrice": 800,
+            "itemKey": 302,
+            "itemCatalogKey": 78,
+            "foundGrade": 0,
+            "foundFlawEa": 0,
+            "isAuthenticityFound": false,
+            "customerKey": 75,
+	    "revealedFraud":0.58,
+	    "revealedWellCollect":0.76,
+	    "revealedClumsy":-1 // -1이면 아직 미열람 상태라는 뜻
+        },
+        {
+            "drcKey": 203,
+            "askingPrice": 1500,
+            "purchasePrice": 1500,
+            "appraisedPrice": 1500,
+            "itemKey": 303,
+            "itemCatalogKey": 12,
+            "foundGrade": 0,
+            "foundFlawEa": 0,
+            "isAuthenticityFound": false,
+            "customerKey": 49,
+	    "revealedFraud":0.58,
+	    "revealedWellCollect":0.76,
+	    "revealedClumsy":-1 // -1이면 아직 미열람 상태라는 뜻
+        }
+    ]
+}
+// 클라이언트: dailyDeals 리스트를 받아 당일 거래 목록으로 표시
+
+11. 거래 중 액션(흠찾기, 진위 판정, 감정)
+POST /deal/action
+-------------------------------------
+Request JSON
+{
+    "drcKey": 201,
+    "actionType": "FINDFLAW",   // "FINDFLAW", "AUTHCHECK", "APPRAISE"
+    "actionLevel": 2,            // 액션 레벨 (1, 2, 3)
+}
+Response JSON (200 OK)
+{
+    "totalPurchasePrice": 1200,
+    "totalAppraisedPrice": 1400,
+    "changedPurchasedPriceByAction": "-200",   // 구매가 상승/하락분
+    "changedAppraisedPriceByAction": "+200",   // 감정가 상승/하락분
+    "foundGrade": 2,
+    "foundFlawEa": 1,
+    "isAuthenticityFound": true,
+    "leftMoney": 49870          // 액션 후 남은 돈
+
+}
+// 클라이언트: 거래 정보 갱신 및 UI 업데이트
+// actionType에 따라 흠찾기/진위판정/감정 결과 반영
+// DB 업데이트 필요
+// cost는 서버에서 계산하여 차감
+// 받을 때는 어차피 거기서 보낸 걸테니까 actionType 구분 안 해도 됨
+
+
+
+12. 거래(구매) 성사
+POST /deal/complete
+-------------------------------------
+Request JSON
+{
+    "drcKey": 201,
+    "itemKey": 301
+}
+Response JSON (200 OK)
+{
+    "leftMoney": 48670,
+    "displayedItem": {
+        "displayPositionKey": 3,
+        "askingPrice": 1000,
+        "purchasePrice": 800,
+        "appraisedPrice": 900,
+        "boughtDate": 1,
+        "sellerName": "김뿡뿡",
+        "foundGrade": 2,
+        "foundFlawEa": 1,
+        "authenticity": 1,         // 1=진짜, 0=가짜, -1=미발견
+        "itemState": 1,            // OnDisplay
+        "itemKey": 301,
+        "itemCatalogKey": 45
+    }
+}
+JSON Response (400 Bad Request)
+{
+    "error": "Not enough money to complete the deal."
+}
+
+// 클라이언트 처리 로직: 구매 확정 시 POST /deal/complete 호출
+// 플레이어 돈, 전시장 갱신
+// DealCompleteResponse
+// DealCompleteRequest
+
+
+13. 거래 거부(거래 및 아이템 삭제)
+POST /deal/cancel
+-------------------------------------
+JSON Request
+{
+    "drcKey": 201,
+    "itemKey": 301
+}   
+Response JSON (200 OK)
+{
+}
+// 클라이언트 처리 로직: 거래 거부 시 POST /deal/cancel 호출
+// 서버: 해당 거래 및 아이템 데이터 삭제
+// DealCompleteRequest
+
+14. 아이템 복원 요청
+POST /item/action
+-------------------------------------
+JSON Request
+{
+    "actionType": "restore",   // "restore","auction" 
+    "itemKey": 301
+}
+Response JSON (200 OK)
+{
+    "itemState": 2,     // 복원 중/ 경매 중으로 변경
+}
+// 클라이언트 처리 로직: 아이템 복원 요청 시 POST /item/action 호출
+// 서버: 아이템 상태를 복원/경매 중으로 변경
+// ItemActionRequest
+// ItemActionResponse
+
+15. 아이템 복원 완료 
+POST /item/result
+-------------------------------------
+JSON Request
+{
+    "actionResultItemKeys": [
+        {
+            "itemKey": 301
+        },
+        {
+            "itemKey": 302
+        }
+    ]
+}
+Response JSON (200 OK)
+{
+    "actionResults": [
+        {
+            "itemKey": 301,
+            "itemState": 1,     // 복원 완료 시, 전시 중 OnDisplay으로 변경. 아직 아니면 2(복원 중) 유지
+            "resultMoney": "-1500",  // 복원 비용/경매 정산금
+            "appraisedPrice": 2000,    // 복원 후 감정가 상승/하락 반영 최종 값
+            "purchasePrice": 1800     // 복원 후 구매가 상승/하락 반영
+        },
+        {
+            "itemKey": 302,
+            "itemState": 3,     // 복원 완료 시, 전시 중 OnDisplay으로 변경. 아직 아니면 2(복원 중) 유지
+            "resultMoney": "0",  // 복원 비용 요구
+            "appraisedPrice": 1500,    // 복원 후 감정가 상승/하락 반영 최종 값
+            "purchasePrice": 1300     // 복원 후 구매가 상승/하락 반영
+        },
+        {
+            "itemKey": 303,
+            "itemState": 1,     // 복원 완료 시, 전시 중 OnDisplay으로 변경. 아직 아니면 2(복원 중) 유지
+            "resultMoney": "+1500",  // 경매 정산금 명시
+            "appraisedPrice": 1500,    // 복원 후 감정가 상승/하락 반영 최종 값
+            "purchasePrice": 1300     // 복원 후 구매가 상승/하락 반영
+        }
+    ],
+    "leftMoney": 50200          // 모든 액션 후 현재 남은 돈
+}
+// 매일 아침에(날 시작 시) 전시장에 복원 중인 아이템 담아서 전달
+// 서버에서 그만큼 날짜 지났으면 복원 완료 처리
+// actionResultRequest
+// actionResultResponse
+// actionItemData
+
+
+
+
+16. 아이템 판매 개시
+POST /item/sellStart
+-------------------------------------
+JSON Request
+{
+    "itemKey": 301,
+    "customerKey": 89,
+}
+Response JSON (200 OK)
+{
+    "sellingPrice": 3000,
+}
+Response JSON (400 Bad Request)
+{
+    "error": "Item category does not match customer preference."
+}
+// 클라이언트 처리 로직: 아이템과 고객 카테고리 일치 시 POST /item/sell 호출
+// 서버: 아이템&고객 카테고리 일치 확인 및 판매가 계산
+// errorResponse
+// SellStartResponse
+// SellStartRequest
+
+
+
+17. 아이템 판매 확정
+POST /item/sellComplete
+-------------------------------------   
+JSON Request
+{
+    "itemKey": 301,
+    "customerKey": 89,
+}
+Response JSON (200 OK)
+{
+    "earnedAmount": "+2400", // 구매가 대비 실제 수익금(최종 판매가 - 구매가)
+    "leftMoney": 55000,
+    "displayedPositionKey": 3, // 판매된 아이템의 전시장 위치 키
+}
+Response JSON (400 Bad Request)
+{
+    "error": "not enough money to complete the deal."
+}
+// 클라이언트 처리 로직: 아이템 판매 확정 시 POST /item/sellComplete 호출
+// 서버: 아이템&고객 카테고리 일치 확인
+
+
+
+18. 대출(빌리기) / 상환
+POST /loan/update
+-------------------------------------
+JSON Request
+{
+    "debtType": "PERSONAL",   // "PERSONAL" or "PAWNSHOP"
+    "amount": 100000          // 양수: 대출(빌리기),음수: 상환(갚기)
+}
+Response JSON (200 OK)
+{
+    "debtType": "PERSONAL",
+    "leftDebtAmount": 400000    // 상환 후 남은 대출금
+    "leftMoney": 60000,        // 대출/상환 후 남은 돈
+}
+Response JSON (400 Bad Request)
+{
+    "error": "Cannot repay more than the current debt."
+}
+// 클라이언트 처리 로직: 대출/상환 시 POST /loan/update 호출
+// LoanUpdateRequest
+// LoanUpdateResponse
+
+
+
+
+
+19. 다음 날 넘어가기(정산하기)
+POST /day/next
+-------------------------------------
+JSON Request
+{
+}       
+Response JSON (200 OK)
+{
+    "dayCount": 2,
+    "leftMoney": 48000,
+    "personalDebt": 500000,
+    "pawnshopDebt": 45000,
+    "dailyTransactionSummary": {
+        "startMoney": 50000,
+        "boughtSum": 3000,
+        "soldSum": 4500,
+        "interest": -5000,
+        "weeklyInterest": -1500, // 매주 말일에만 포함. 아니면 0 넣기
+        "finalMoney": 48000
+    }
+}
+// 클라이언트 처리 로직: 하루 종료 시 POST /day/next 호출
+// GameSessionData 갱신
+// DayNextResponse
+// DailyTransactionSummary
+
+
+
+20. 세계 기록 조회(랭킹)
+GET /worldRecords
+-------------------------------------
+JSON Request
+{
+}
+Response JSON (200 OK)
+{
+    "worldRecords": [
+        {
+            "playerId": "string",
+            "nickname": "PawnMaster",
+            "pawnshopName": "Elite Pawns",
+            "gameEndDatyCount": 57,
+            "gameEndDate": "2024-01-15T10:00:00Z",
+            "largestProfit": "50000",
+        },
+        {
+            "playerId": "string",
+            "nickname": "GoldTrader",
+            "pawnshopName": "Golden Deals",
+            "clearDayCount": 62,
+            "clearDate": "2024-02-10T12:30:00Z", // 형식은 저장 되는 대로
+            "largestProfit": "60000",
+        }
+    ]
+}
+// 클라이언트 처리 로직: 세계 기록(랭킹) 조회 시 GET /worldRecords 호출
+// 서버: 세션 토큰 검증 및 기록 조회
+// (+dayCount 기준 적은 순위)상위 10개 기록 요청
+// errorResponse
+// WorldRecordsResponse
+// WorldRecordsData
+
+21. 게임 끝났는지 확인
+POST /game/checkEnd
+-------------------------------------
+JSON Request
+{
+}
+Response JSON (200 OK)
+{
+    "isGameEnded": true,
+    "isGameOvered": true, // 파산으로 게임 오버인지 여부. false면 정상 클리어
+    "worldRecords": {
+        "playerId": "string",
+        "nickname": "PawnMaster",
+        "pawnshopName": "Elite Pawns",
+        "gameEndDatyCount": 57,
+        "gameEndDate": "2024-01-15T10:00:00Z",
+        "largestProfit": "50000",
+    }
+}
+// 클라이언트 처리 로직: 이자 체크, 복원 비용 못 내면, POST /game/checkEnd 호출
+// 서버: 세션 토큰 검증 및 게임 종료 여부 확인
+// 게임 종료 시 worldRecord도 함께 전달
+// errorResponse
+// GameCheckEndResponse
+
+22. 로그아웃 / 세션 만료
+POST /player/logout
+-------------------------------------
+JSON Request
+{
+}
+Response JSON (200 OK)
+{
+}
+// 클라이언트 처리 로직: 로그아웃 시 POST /player/logout 호출
+// 서버: 세션 토큰 검증 및 로그아웃 처리
+// errorResponse
+// LogoutResponse
