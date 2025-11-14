@@ -295,6 +295,26 @@ Response JSON (200 OK)
     ]
 }
 // 클라이언트: dailyDeals 리스트를 받아 당일 거래 목록으로 표시
+DB쿼리 -> 
+
+3개 테이블 조인해서 GAME_SESSION - DEAL_RECORD - EXISTING_ITEM 확인해보고
+아이템 스테이트가 0, 전시됨인 상태인 모든 거래를 가져오게 시킴
+만약에 아무것도 없으면, 새로 3개 생성해서 전달함
+
+ITEM_STATE NUMBER(1) DEFAULT 0 NOT NULL, -- 아이템 진행 상황
+        CONSTRAINT CK_EXISTING_ITEM_STATE_RANGE CHECK (
+            ITEM_STATE IN (
+                0, -- 생성 됨
+                1, -- 전시 중
+                2, -- 복원 중
+                3, -- 경매 중
+                4, -- 판매 됨
+                5  -- 복원 완료
+            )
+        ),
+
+
+
 
 11. 거래 중 액션(흠찾기, 진위 판정, 감정)
 POST /deal/action
