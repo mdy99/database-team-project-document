@@ -49,6 +49,13 @@ public class PlayerRegisterLoginRequest
     public string password;
 }
 
+[System.Serializable]
+public class LoginResponse
+{
+    public string sessionToken;
+}
+
+
 // POST /player/login
 // POST /game-session/new
 // POST /game-session/latest
@@ -392,7 +399,6 @@ public class WorldRecordData
     public string pawnshopName;
     public int clearDayCount;
     public string clearDate;
-    public int largestProfit;
 }
 
 [System.Serializable]
